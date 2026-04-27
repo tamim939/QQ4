@@ -1,0 +1,87 @@
+{
+  "entities": {
+    "User": {
+      "title": "User Profile",
+      "description": "User account details, wallet balance, and referral information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "mobile": { "type": "string" },
+        "profileName": { "type": "string" },
+        "wallet": { "type": "number" },
+        "referCode": { "type": "string" },
+        "referredBy": { "type": "string" },
+        "totalCommission": { "type": "number" },
+        "hasDeposited": { "type": "boolean" },
+        "hideDepositBonus": { "type": "boolean" },
+        "lastBonusClaimDate": { "type": "string", "format": "date" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["uid", "mobile", "wallet"]
+    },
+    "GamePeriod": {
+      "title": "Game Period",
+      "description": "Information about a specific lottery round.",
+      "type": "object",
+      "properties": {
+        "duration": { "type": "integer", "enum": [30, 60, 180] },
+        "periodId": { "type": "string" },
+        "number": { "type": "integer" },
+        "color": { "type": "string", "enum": ["Red", "Green", "Violet"] },
+        "size": { "type": "string", "enum": ["Big", "Small"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Bet": {
+      "title": "User Bet",
+      "description": "A bet placed by a user for a specific period.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "periodId": { "type": "string" },
+        "duration": { "type": "integer" },
+        "type": { "type": "string", "enum": ["color", "number", "size"] },
+        "value": { "type": "string" },
+        "amount": { "type": "number" },
+        "multiplier": { "type": "integer" },
+        "quantity": { "type": "integer" },
+        "status": { "type": "string", "enum": ["pending", "won", "lost"] },
+        "payout": { "type": "number" },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    },
+    "Transaction": {
+      "title": "Transaction History",
+      "description": "Record of a deposit or withdrawal.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["deposit", "withdrawal"] },
+        "amount": { "type": "number" },
+        "method": { "type": "string" },
+        "account": { "type": "string" },
+        "txId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "success", "rejected"] },
+        "timestamp": { "type": "string", "format": "date-time" }
+      }
+    }
+  },
+  "firestore": {
+    "users/{userId}": {
+      "schema": "User",
+      "description": "User profiles"
+    },
+    "game_periods/{duration}/history/{periodId}": {
+      "schema": "GamePeriod",
+      "description": "History of lottery results"
+    },
+    "bets/{betId}": {
+      "schema": "Bet",
+      "description": "User bets"
+    },
+    "transactions/{txId}": {
+      "schema": "Transaction",
+      "description": "Financial records"
+    }
+  }
+}
