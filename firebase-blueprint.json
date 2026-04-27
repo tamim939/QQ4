@@ -7,15 +7,15 @@
       "properties": {
         "uid": { "type": "string" },
         "mobile": { "type": "string" },
-        "profileName": { "type": "string" },
+        "displayName": { "type": "string" },
+        "avatar": { "type": "string" },
         "wallet": { "type": "number" },
         "referCode": { "type": "string" },
         "referredBy": { "type": "string" },
         "totalCommission": { "type": "number" },
         "hasDeposited": { "type": "boolean" },
         "hideDepositBonus": { "type": "boolean" },
-        "lastBonusClaimDate": { "type": "string", "format": "date" },
-        "createdAt": { "type": "string", "format": "date-time" }
+        "lastBonusClaimDate": { "type": "string", "format": "date" }
       },
       "required": ["uid", "mobile", "wallet"]
     },

@@ -251,6 +251,10 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
   const [error, setError] = useState('');
 
   const handleSave = async () => {
+    if (!displayName.trim()) {
+      setError('Name cannot be empty');
+      return;
+    }
 
     setLoading(true);
     setError('');
@@ -262,6 +266,9 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
         await updateDoc(userRef, {
           displayName: displayName.trim()
         }).catch(err => handleFirestoreError(err, OperationType.UPDATE, `users/${userData.uid}`));
+        
+        // Success feedback
+        alert('Name updated successfully!');
       }
 
       onClose();

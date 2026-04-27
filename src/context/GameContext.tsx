@@ -81,7 +81,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const unsubscribes = [30, 60, 180].map(d => {
       const q = query(
-        collection(db, `/game_periods/${d}/history`),
+        collection(db, `game_periods/${d}/history`),
         orderBy('timestamp', 'desc'),
         limit(50)
       );
@@ -112,7 +112,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         // In a real app, this is done by a server
         const res = calculateResult(prevPeriodId);
         const docId = `${d}_${prevPeriodId}`;
-        const docRef = doc(db, `/game_periods/${d}/history`, prevPeriodId);
+        const docRef = doc(db, `game_periods/${d}/history`, prevPeriodId);
         
         // Only one user tends to win the race to set this
         try {
@@ -122,7 +122,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             timestamp: prevDate.toISOString()
           }, { merge: true });
         } catch (e) {
-          handleFirestoreError(e, OperationType.WRITE, `/game_periods/${d}/history/${prevPeriodId}`);
+          handleFirestoreError(e, OperationType.WRITE, `game_periods/${d}/history/${prevPeriodId}`);
         }
       });
     }, 10000);

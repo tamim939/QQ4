@@ -1,24 +1,44 @@
-# Security Specification - QQ4
+# Firestore Security Specification
 
 ## Data Invariants
-1. **Users**: Users can only read and write their own profile. Wallet balance can only be updated via transactions (logic enforced in app, rules guard against arbitrary balance sets).
-2. **Game Periods**: History is publicly readable. Only authenticated users can write (simulated game logic).
-3. **Bets**: Users can only read their own bets. Bets must be linked to the user's UID.
-4. **Transactions**: Users can only read their own transactions.
+1. Users can only access their own profile.
+2. Users can only manage their own bets and transactions.
+3. Game history is public for reading but requires authentication for writing (for demo hosting logic).
+4. Timestamp fields must be server-generated.
+5. PII (if any) must be protected.
 
-## The "Dirty Dozen" Payloads (Attacks)
-1. **Identity Spoofing**: Attempting to set `uid` to another user's ID in `/users`.
-2. **Shadow Updates**: Including `wallet: 999999` in a profile update.
-3. **Cross-User Read**: Trying to `get` or `list` another user's bets.
-4. **History Poisoning**: Authenticated user trying to overwrite a game result with a different outcome.
-5. **Resource Exhaustion**: Sending a 1MB string as a `mobile` number.
-6. **ID Injection**: Using a 1.5KB string as a document ID.
-7. **Negative Bet**: Placing a bet with `amount: -100`.
-8. **Auth-less Write**: Trying to create a bet without being signed in.
-9. **Role Escalation**: Trying to create an `admins` document for themselves.
-10. **State Skipping**: Updating a bet status from `pending` directly to `won` without valid game logic.
-11. **PII Leak**: Unauthenticated user trying to list all user mobiles.
-12. **Future Prediction**: Trying to read a "future" game period if it was secret (n/a here but good to consider).
+## The Dirty Dozen Payloads
+We will test these payloads against our rules to ensure they are rejected.
 
-## Test Runner
-See `firestore.rules.test.ts` for implementation of these checks.
+1. **Identity Spoofing**: Attempt to create a user profile for someone else.
+   - `PUT /users/victim-id { "uid": "attacker-id", ... }` -> DENIED
+2. **Wallet Manipulation**: Attempt to increment own wallet balance directly.
+   - `UPDATE /users/my-id { "wallet": 999999 }` -> DENIED (should only be via transactions)
+3. **Ghost Field Injection**: Adding admin flags to profile.
+   - `UPDATE /users/my-id { "isAdmin": true }` -> DENIED
+4. **Orphaned Bet**: Creating a bet for a non-existent user.
+   - `CREATE /bets/bet-id { "userId": "non-existent", ... }` -> DENIED
+5. **Past Bet Creation**: Creating a bet for a period that has already ended.
+   - `CREATE /bets/bet-id { "timestamp": "2020-01-01...", ... }` -> DENIED
+6. **Result Tampering**: Overwriting a game result that already exists.
+   - `UPDATE /game_periods/30/history/old-period { "number": 7 }` -> DENIED
+7. **Resource Poisoning**: Injecting 1MB string as period ID.
+   - `CREATE /game_periods/30/history/[1MB-STRING]` -> DENIED
+8. **PII Leak**: Reading someone else's profile.
+   - `GET /users/victim-id` -> DENIED
+9. **History Wipe**: Deleting game history.
+   - `DELETE /game_periods/30/history/some-id` -> DENIED
+10. **Transaction Forgery**: Creating a 'success' deposit without approval.
+    - `CREATE /transactions/tx-id { "status": "success", ... }` -> DENIED
+11. **Negative Bet**: Betting a negative amount.
+    - `CREATE /bets/bet-id { "amount": -100 }` -> DENIED
+12. **Status Shortcutting**: Directly updating a bet to 'won'.
+    - `UPDATE /bets/bet-id { "status": "won" }` -> DENIED
+
+## Red Team Conflict Report (Anticipated)
+| Collection | Identity Spoofing | State Shortcutting | Resource Poisoning |
+|------------|-------------------|--------------------|--------------------|
+| users      | Blocked via UID   | N/A                | id.size() guard    |
+| game_hist  | Blocked via match | Immutable results  | isValidId() guard  |
+| bets       | Blocked via UID   | Status locking     | id.size() guard    |
+| txs        | Blocked via UID   | Status locking     | id.size() guard    |
