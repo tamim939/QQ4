@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             const newUserData: UserData = {
               uid: user.uid,
               mobile: mobile,
-              displayName: 'user_' + mobile.slice(-4),
+              displayName: "Tamim",
               avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
               wallet: 20,
               hasDeposited: false,

@@ -25,7 +25,7 @@ import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { db, handleFirestoreError, OperationType } from '../lib/firebase';
 
 export default function Profile() {
   const { userData } = useAuth();
@@ -43,8 +43,8 @@ export default function Profile() {
   };
 
   const walletBalance = typeof userData?.wallet === 'number' ? userData.wallet : 0;
-  const username = userData?.displayName || userData?.mobile || "Tamim";
-  const uid = userData?.uid?.slice(0, 6) || "934160";
+  const username = userData?.displayName || userData?.mobile || "User";
+  const uid = userData?.uid?.slice(0, 6) || "000000";
 
   const avatar = userData?.avatar || "https://img.freepik.com/premium-photo/profile-avatar-white-male-with-yellow-hair-angry-surprised-expression_1020697-38010.jpg";
 
@@ -258,9 +258,10 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
     try {
       // Update display name in Firestore
       if (userData?.uid) {
-        await updateDoc(doc(db, 'users', userData.uid), {
-          displayName: displayName
-        });
+        const userRef = doc(db, 'users', userData.uid);
+        await updateDoc(userRef, {
+          displayName: displayName.trim()
+        }).catch(err => handleFirestoreError(err, OperationType.UPDATE, `users/${userData.uid}`));
       }
 
       onClose();
