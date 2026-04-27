@@ -296,13 +296,13 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
 
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Display Name</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Name</label>
               <input 
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] transition-all font-bold text-gray-700"
-                placeholder="Enter display name"
+                placeholder="Enter your name"
               />
             </div>
 
