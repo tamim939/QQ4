@@ -26,7 +26,6 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { updatePassword } from 'firebase/auth';
 
 export default function Profile() {
   const { userData } = useAuth();
@@ -248,16 +247,10 @@ function MenuListItem({ icon: Icon, label, count, extra, color }: { icon: any, l
 function AccountSettingsModal({ onClose, username }: { onClose: () => void, username: string }) {
   const { userData } = useAuth();
   const [displayName, setDisplayName] = useState(username);
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSave = async () => {
-    if (newPassword && newPassword !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
 
     setLoading(true);
     setError('');
@@ -270,14 +263,9 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
         });
       }
 
-      // Update password in Auth if provided
-      if (newPassword && auth.currentUser) {
-        await updatePassword(auth.currentUser, newPassword);
-      }
-
       onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to update settings');
+      setError(err.message || 'Failed to update name');
     } finally {
       setLoading(false);
     }
@@ -315,28 +303,6 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] transition-all font-bold text-gray-700"
                 placeholder="Enter display name"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">New Password (Optional)</label>
-              <input 
-                type="password"
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] transition-all font-bold text-gray-700"
-                placeholder="New Password"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Confirm Password</label>
-              <input 
-                type="password"
-                value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] transition-all font-bold text-gray-700"
-                placeholder="Confirm Password"
               />
             </div>
 
