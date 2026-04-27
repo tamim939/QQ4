@@ -1,7 +1,16 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
-import firebaseConfig from '../../firebase-applet-config.json';
+const firebaseConfig = {
+  "projectId": "messenger-clone-8c84f",
+  "appId": "1:727320176215:web:452ee54d361c211d412512",
+  "apiKey": "AIzaSyAqwlo5VSa1HHrkgU9H3kwahDhwHKR8ZqM",
+  "authDomain": "messenger-clone-8c84f.firebaseapp.com",
+  "databaseURL": "https://messenger-clone-8c84f-default-rtdb.firebaseio.com",
+  "storageBucket": "messenger-clone-8c84f.firebasestorage.app",
+  "messagingSenderId": "727320176215",
+  "measurementId": "G-9KS2DTBZ13"
+};
 
 const app = initializeApp(firebaseConfig);
 export const db = getFirestore(app);
