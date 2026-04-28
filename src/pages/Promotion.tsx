@@ -15,15 +15,16 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 
 export default function Promotion() {
   const { userData } = useAuth();
   const [activeTab, setActiveTab] = useState('direct');
-  const invitationCode = userData?.uid?.slice(0, 6) || "934160";
+  const userNumericId = userData?.userNumericId || "........";
 
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(invitationCode);
-    alert('Invitation code copied!');
+    navigator.clipboard.writeText(userNumericId);
+    toast.success('Code copied!');
   };
 
   return (
@@ -37,9 +38,12 @@ export default function Promotion() {
         </div>
       </header>
 
-      {/* Agency Title */}
-      <div className="bg-white py-4 text-center">
+      {/* Agency Title & User Info */}
+      <div className="bg-white py-4 px-6 flex items-center justify-between">
          <h2 className="text-lg font-bold text-gray-800 tracking-tight">Agency</h2>
+         <div className="flex flex-col items-end">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">UID: {userNumericId}</p>
+         </div>
       </div>
 
       {/* Main Yellow Banner */}
@@ -110,7 +114,7 @@ export default function Promotion() {
                <p className="text-sm font-bold text-gray-700">Copy invitation code</p>
             </div>
             <div className="flex items-center space-x-3">
-               <span className="text-xs font-bold text-gray-400">{invitationCode}</span>
+               <span className="text-xs font-bold text-gray-400">{userNumericId}</span>
                <button onClick={copyToClipboard} className="text-gray-400">
                   <Copy size={18} />
                </button>

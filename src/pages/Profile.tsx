@@ -18,7 +18,8 @@ import {
   Globe,
   Headphones,
   Star,
-  X
+  X,
+  ShieldCheck
 } from 'lucide-react';
 import { auth } from '../lib/firebase';
 import { useAuth } from '../context/AuthContext';
@@ -31,11 +32,17 @@ import { handleFirestoreError, OperationType } from '../lib/utils';
 
 import toast from 'react-hot-toast';
 
-export default function Profile({ onNavigateToWallet, onShowGifts }: { onNavigateToWallet?: (tab: 'deposit' | 'withdraw', view?: 'wallet' | 'payment' | 'history') => void, onShowGifts?: () => void }) {
-  const { userData } = useAuth();
+export default function Profile({ onNavigateToWallet, onShowGifts, onShowAdmin }: { 
+  onNavigateToWallet?: (tab: 'deposit' | 'withdraw', view?: 'wallet' | 'payment' | 'history') => void, 
+  onShowGifts?: () => void,
+  onShowAdmin?: () => void 
+}) {
+  const { userData, user } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
   
+  const isAdmin = userData?.mobile === '19093386355';
+
   const handleLogout = () => {
     auth.signOut();
   };
@@ -169,6 +176,15 @@ export default function Profile({ onNavigateToWallet, onShowGifts }: { onNavigat
         <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100">
           <MenuListItem icon={Bell} label="Notification" count={0} color="text-red-500" />
           <MenuListItem icon={Gift} label="Gifts" onClick={onShowGifts} />
+          {isAdmin && (
+            <MenuListItem 
+              icon={ShieldCheck} 
+              label="Admin Dashboard" 
+              color="text-emerald-500" 
+              onClick={onShowAdmin}
+              extra="Admin"
+            />
+          )}
           <MenuListItem icon={BarChart} label="Game statistics" />
           <MenuListItem icon={Globe} label="Language" extra="English" />
         </div>

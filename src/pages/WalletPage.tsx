@@ -625,7 +625,7 @@ export default function WalletPage({ initialTab = 'deposit', initialView = 'wall
         setView('history');
         setTxnId('');
         setAmount('');
-      }, 2500); // 2.5s for success animation
+      }, 1000); // reduced to 1s for faster redirection
     } catch (error) {
       toast.error('Failed to submit deposit');
     } finally {
