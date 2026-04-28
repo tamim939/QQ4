@@ -55,7 +55,8 @@ export default function Lottery({ onBack }: LotteryProps) {
 
       const userRef = doc(db, 'users', userData.uid);
       await updateDoc(userRef, {
-        wallet: increment(-totalAmount)
+        wallet: increment(-totalAmount),
+        totalWager: increment(totalAmount)
       });
 
       setBetModalOpen(false);

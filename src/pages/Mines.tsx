@@ -25,7 +25,10 @@ export default function Mines({ onBack }: { onBack: () => void }) {
   const startGame = async () => {
     if (!userData || userData.wallet < bet) return;
     const userRef = doc(db, 'users', userData.uid);
-    await updateDoc(userRef, { wallet: increment(-bet) });
+    await updateDoc(userRef, { 
+      wallet: increment(-bet),
+      totalWager: increment(bet)
+    });
 
     const newMines: number[] = [];
     while (newMines.length < mineCount) {

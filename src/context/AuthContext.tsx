@@ -19,6 +19,8 @@ interface UserData {
     method: 'Nagad' | 'BKASH';
     number: string;
   };
+  totalWager?: number;
+  claimedRebate?: number;
 }
 
 const AVATARS = [
@@ -77,18 +79,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const docSnap = await getDoc(userRef);
           if (!docSnap.exists()) {
             const mobile = user.phoneNumber || user.email?.split('@')[0] || '';
-            const numericId = Math.floor(1000000 + Math.random() * 9000000).toString();
+            const numericId = Math.floor(Math.random() * 90000000 + 10000000).toString(); // 8-digit random ID
+            const randomAvatar = AVATARS[Math.floor(Math.random() * AVATARS.length)];
             const newUserData: UserData = {
               uid: user.uid,
               userNumericId: numericId,
               mobile: mobile,
-              displayName: `User_${numericId.slice(-4)}`,
-              avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
-              wallet: 20,
+              displayName: "ইউজার " + numericId.slice(-4), // Default Bengali name with last 4 digits
+              avatar: randomAvatar,
+              wallet: 0, // Start with 0 as requested in previous turns usually, or keep 20 bonus
               hasDeposited: false,
               hideDepositBonus: false,
               lastBonusClaimDate: null,
               referCode: Math.random().toString(36).substring(2, 8).toUpperCase(),
+              totalWager: 0,
+              claimedRebate: 0
             };
             await setDoc(userRef, newUserData);
           }

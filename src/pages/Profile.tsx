@@ -47,8 +47,8 @@ export default function Profile({ onNavigateToWallet, onShowGifts }: { onNavigat
   };
 
   const walletBalance = typeof userData?.wallet === 'number' ? userData.wallet : 0;
-  const username = userData?.displayName || "ইউজার";
-  const userNumericId = userData?.userNumericId || "0000000";
+  const username = userData?.displayName || "...";
+  const userNumericId = userData?.userNumericId || "........";
 
   const avatar = userData?.avatar || "https://img.freepik.com/premium-photo/profile-avatar-white-male-with-yellow-hair-angry-surprised-expression_1020697-38010.jpg";
 
@@ -257,8 +257,22 @@ function MenuListItem({ icon: Icon, label, count, extra, color, onClick }: { ico
 function AccountSettingsModal({ onClose, username }: { onClose: () => void, username: string }) {
   const { userData } = useAuth();
   const [displayName, setDisplayName] = useState(username);
+  const [currentAvatar, setCurrentAvatar] = useState(userData?.avatar || "");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  const AVATARS = [
+    'https://img.freepik.com/free-photo/lifestyle-people-emotions-concept-close-up-cheerful-stylish-girl-with-blue-eyes-natural-makeup-wearing-grey-t-shirt-smiling-broadly-expressing-joy-happiness-optimism_176420-14285.jpg',
+    'https://img.freepik.com/free-photo/portrait-handsome-man-with-dark-hair_176420-15582.jpg',
+    'https://img.freepik.com/free-photo/side-view-profile-portrait-middle-aged-man_176420-15344.jpg',
+    'https://img.freepik.com/free-photo/portrait-young-man-with-dark-hair_176420-15581.jpg',
+    'https://img.freepik.com/free-photo/portrait-young-gentleman-holding-camera_23-2148213337.jpg',
+    'https://img.freepik.com/free-photo/close-up-young-woman-with-surprised-expression_23-2148859451.jpg',
+    'https://img.freepik.com/free-photo/portrait-smiling-attractive-man_23-2148859450.jpg',
+    'https://img.freepik.com/free-photo/beautiful-woman-portrait_23-2148859455.jpg',
+    'https://img.freepik.com/premium-photo/profile-avatar-white-male-with-yellow-hair-angry-surprised-expression_1020697-38010.jpg',
+    'https://img.freepik.com/free-photo/young-man-portrait_23-2148859460.jpg'
+  ];
 
   const handleSave = async () => {
     if (!displayName.trim()) {
@@ -270,20 +284,18 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
     setError('');
     
     try {
-      // Update display name in Firestore
       if (userData?.uid) {
         const userRef = doc(db, 'users', userData.uid);
         await updateDoc(userRef, {
-          displayName: displayName.trim()
+          displayName: displayName.trim(),
+          avatar: currentAvatar
         }).catch(err => handleFirestoreError(err, OperationType.UPDATE, `users/${userData.uid}`));
         
-        // Success feedback
-        toast.success('Name updated successfully!');
+        toast.success('প্রোফাইল আপডেট হয়েছে!');
+        onClose();
       }
-
-      onClose();
     } catch (err: any) {
-      setError(err.message || 'Failed to update name');
+      setError(err.message || 'Failed to update profile');
     } finally {
       setLoading(false);
     }
@@ -305,20 +317,42 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
         className="bg-white w-full max-w-sm rounded-[32px] overflow-hidden relative z-10 shadow-2xl"
       >
         <div className="p-8">
-          <div className="flex items-center justify-center mb-8 relative">
-            <h3 className="text-2xl font-black text-gray-800 uppercase tracking-tight">Account Settings</h3>
+          <div className="flex items-center justify-center mb-6 relative">
+            <h3 className="text-xl font-black text-gray-800 uppercase tracking-tight">সেটিংস</h3>
             <button onClick={onClose} className="absolute right-0 text-gray-300 hover:text-gray-500">
                <X size={24} />
             </button>
           </div>
 
           <div className="space-y-6">
+            {/* Avatar Selection Preview */}
+            <div className="flex flex-col items-center space-y-4">
+              <div className="w-24 h-24 rounded-full p-1 border-2 border-[#f1c40f] overflow-hidden">
+                <img src={currentAvatar} className="w-full h-full object-cover rounded-full" alt="preview" />
+              </div>
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest leading-none">Choose Avatar</p>
+              <div className="flex space-x-2 overflow-x-auto pb-2 w-full no-scrollbar">
+                {AVATARS.map((av, idx) => (
+                  <button 
+                    key={idx}
+                    onClick={() => setCurrentAvatar(av)}
+                    className={`flex-shrink-0 w-10 h-10 rounded-full overflow-hidden border-2 transition-all ${currentAvatar === av ? 'border-[#f1c40f] scale-110' : 'border-transparent opacity-50'}`}
+                  >
+                    <img src={av} className="w-full h-full object-cover" alt="thumb" />
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className="space-y-2">
               <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">আপনার নাম</label>
               <input 
                 type="text"
                 value={displayName}
-                onChange={(e) => setDisplayName(e.target.value)}
+                onChange={(e) => {
+                  setDisplayName(e.target.value);
+                  if (error) setError('');
+                }}
                 className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] transition-all font-bold text-gray-700"
                 placeholder="নতুন নাম দিন"
               />
@@ -338,7 +372,7 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
                 onClick={handleSave}
                 className="flex-1 py-4 bg-[#f1c40f] text-white font-black rounded-2xl uppercase tracking-tighter shadow-lg shadow-[#f1c40f]/20 active:scale-95 transition-all disabled:opacity-50"
               >
-                {loading ? 'সেভ হচ্ছে...' : 'সেভ'}
+                {loading ? '...' : 'সেভ করুন'}
               </button>
             </div>
           </div>

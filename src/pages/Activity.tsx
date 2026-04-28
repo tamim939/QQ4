@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 
-export default function Activity({ onShowGifts }: { onShowGifts?: () => void }) {
+export default function Activity({ onShowGifts, onShowRebate }: { onShowGifts?: () => void, onShowRebate?: () => void }) {
   const { userData } = useAuth();
 
   return (
@@ -59,7 +59,7 @@ export default function Activity({ onShowGifts }: { onShowGifts?: () => void }) 
         {/* Main Icon Grid */}
         <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 grid grid-cols-4 gap-4">
           <ActivityAction icon={Award} label="Activity Award" color="bg-rose-50" iconColor="text-rose-500" />
-          <ActivityAction icon={Wallet} label="Betting rebate" color="bg-orange-50" iconColor="text-orange-500" />
+          <ActivityAction icon={Wallet} label="Betting rebate" color="bg-orange-50" iconColor="text-orange-500" onClick={onShowRebate} />
           <ActivityAction icon={Trophy} label="Super Jackpot" color="bg-emerald-50" iconColor="text-emerald-500" />
           <ActivityAction icon={Gift} label="Invite Wheel" color="bg-purple-50" iconColor="text-purple-500" />
         </div>
@@ -78,7 +78,10 @@ export default function Activity({ onShowGifts }: { onShowGifts?: () => void }) 
             </div>
           </div>
 
-          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 active:scale-95 transition-transform">
+          <div 
+            onClick={onShowRebate}
+            className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 active:scale-95 transition-transform cursor-pointer"
+          >
             <div className="h-28 bg-[#4299e1] flex items-center justify-center relative">
                <Calendar size={32} className="text-white relative z-10" />
             </div>
@@ -97,9 +100,12 @@ export default function Activity({ onShowGifts }: { onShowGifts?: () => void }) 
   );
 }
 
-function ActivityAction({ icon: Icon, label, color, iconColor }: { icon: any, label: string, color: string, iconColor: string }) {
+function ActivityAction({ icon: Icon, label, color, iconColor, onClick }: { icon: any, label: string, color: string, iconColor: string, onClick?: () => void }) {
   return (
-    <div className="flex flex-col items-center space-y-2 cursor-pointer active:scale-95 transition-transform">
+    <div 
+      onClick={onClick}
+      className="flex flex-col items-center space-y-2 cursor-pointer active:scale-95 transition-transform"
+    >
       <div className={`${color} ${iconColor} w-12 h-12 rounded-2xl flex items-center justify-center`}>
         <Icon size={24} strokeWidth={2.5} />
       </div>
