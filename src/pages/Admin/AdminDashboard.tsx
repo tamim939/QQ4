@@ -9,6 +9,7 @@ import {
   Search,
   Check,
   X,
+  Copy,
   ChevronLeft,
   ChevronRight,
   TrendingUp,
@@ -203,6 +204,8 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
   const [users, setUsers] = useState<any[]>([]);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [adjustAmount, setAdjustAmount] = useState('');
+  const [editDisplayName, setEditDisplayName] = useState('');
+  const [editMobile, setEditMobile] = useState('');
 
   useEffect(() => {
     const q = query(
@@ -213,7 +216,6 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
     return onSnapshot(q, (snapshot) => {
       setUsers(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() })));
     }, (error) => {
-      // Fallback if createdAt doesn't exist yet on all docs
       const qFallback = query(collection(db, 'users'), limit(100));
       onSnapshot(qFallback, (snap) => {
         setUsers(snap.docs.map(doc => ({ uid: doc.id, ...doc.data() })));
@@ -221,17 +223,31 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
     });
   }, []);
 
-  const handleAdjustBalance = async () => {
-    if (!selectedUser || !adjustAmount) return;
+  useEffect(() => {
+    if (selectedUser) {
+      setEditDisplayName(selectedUser.displayName || '');
+      setEditMobile(selectedUser.mobile || '');
+    }
+  }, [selectedUser]);
+
+  const handleUpdateProfile = async () => {
+    if (!selectedUser) return;
     try {
-      await updateDoc(doc(db, 'users', selectedUser.uid), {
-        wallet: increment(parseFloat(adjustAmount))
-      });
-      toast.success('Balance adjusted!');
+      const updates: any = {
+        displayName: editDisplayName,
+        mobile: editMobile
+      };
+      
+      if (adjustAmount && !isNaN(parseFloat(adjustAmount))) {
+        updates.wallet = increment(parseFloat(adjustAmount));
+      }
+
+      await updateDoc(doc(db, 'users', selectedUser.uid), updates);
+      toast.success('Profile updated!');
       setSelectedUser(null);
       setAdjustAmount('');
     } catch (err) {
-      toast.error('Failed to adjust');
+      toast.error('Update failed');
     }
   };
 
@@ -280,29 +296,46 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
                <motion.div 
                  initial={{ scale: 0.9, opacity: 0 }}
                  animate={{ scale: 1, opacity: 1 }}
-                 className="bg-white w-full max-w-sm rounded-[32px] p-8 relative z-10 text-center"
+                 className="bg-white w-full max-w-sm rounded-[32px] p-8 relative z-10 text-center shadow-2xl"
                >
-                  <h3 className="text-lg font-black text-gray-800 mb-2 uppercase tracking-widest">Edit User</h3>
+                  <h3 className="text-lg font-black text-gray-800 mb-2 uppercase tracking-widest">Edit Profile</h3>
                   <p className="text-[10px] font-bold text-gray-400 mb-6 font-mono">UID: {selectedUser.uid}</p>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-4 text-left">
                      <div>
-                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block text-left mb-1.5 ml-1">Adjust Wallet</label>
-                        <div className="relative">
-                           <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#f1c40f] font-black">৳</div>
-                           <input 
-                             type="number"
-                             placeholder="Amount (e.g. 500 or -500)"
-                             value={adjustAmount}
-                             onChange={(e) => setAdjustAmount(e.target.value)}
-                             className="w-full py-4 pl-10 pr-5 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] font-bold text-gray-800"
-                           />
-                        </div>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Username</label>
+                        <input 
+                          type="text"
+                          value={editDisplayName}
+                          onChange={(e) => setEditDisplayName(e.target.value)}
+                          className="w-full py-4 px-5 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] font-bold text-gray-800 text-sm"
+                        />
+                     </div>
+
+                     <div>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Mobile Number</label>
+                        <input 
+                          type="text"
+                          value={editMobile}
+                          onChange={(e) => setEditMobile(e.target.value)}
+                          className="w-full py-4 px-5 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] font-bold text-gray-800 text-sm"
+                        />
+                     </div>
+
+                     <div>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block mb-1.5 ml-1">Adjust Wallet (৳)</label>
+                        <input 
+                          type="number"
+                          placeholder="Amount (e.g. 500 or -500)"
+                          value={adjustAmount}
+                          onChange={(e) => setAdjustAmount(e.target.value)}
+                          className="w-full py-4 px-5 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] font-bold text-gray-800 text-sm"
+                        />
                      </div>
                      
-                     <div className="flex space-x-3 pt-2">
+                     <div className="flex space-x-3 pt-4">
                         <button onClick={() => setSelectedUser(null)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-[10px]">Cancel</button>
-                        <button onClick={handleAdjustBalance} className="flex-1 py-4 bg-[#f1c40f] text-white rounded-2xl font-black uppercase text-[10px] shadow-lg shadow-[#f1c40f]/20">Apply Changes</button>
+                        <button onClick={handleUpdateProfile} className="flex-1 py-4 bg-[#f1c40f] text-white rounded-2xl font-black uppercase text-[10px] shadow-lg shadow-[#f1c40f]/20">Update</button>
                      </div>
                   </div>
                </motion.div>

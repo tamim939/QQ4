@@ -19,7 +19,7 @@ export default function Mines({ onBack }: { onBack: () => void }) {
   for (let i = 1; i <= 25; i++) factorials[i] = factorials[i - 1] * i;
   const nCr = (n: number, r: number) => factorials[n] / (factorials[r] * factorials[n - r]);
   const multiplier = isPlaying && revealed.length > 0 
-    ? (1 / (nCr(25 - mineCount, revealed.length) / nCr(25, revealed.length)) * 0.95).toFixed(2)
+    ? (1 / (nCr(25 - mineCount, revealed.length) / nCr(25, revealed.length)) * 0.97).toFixed(2)
     : "0.00";
 
   const startGame = async () => {

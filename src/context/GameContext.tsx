@@ -28,6 +28,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     30: { currentPeriodId: '', timeLeft: 30, history: [] },
     60: { currentPeriodId: '', timeLeft: 60, history: [] },
     180: { currentPeriodId: '', timeLeft: 180, history: [] },
+    300: { currentPeriodId: '', timeLeft: 300, history: [] },
   });
   const [currentUser, setCurrentUser] = useState<any>(null);
 
@@ -45,6 +46,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
   };
 
   const calculateResult = (periodId: string) => {
+    // Deterministic result based on period ID for consistency
     let hash = 0;
     for (let i = 0; i < periodId.length; i++) {
         hash = ((hash << 5) - hash) + periodId.charCodeAt(i);
@@ -62,7 +64,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
     setDurations(prev => {
       const next = { ...prev };
-      [30, 60, 180].forEach(d => {
+      [30, 60, 180, 300].forEach(d => {
         const periodId = generatePeriodId(d, now);
         const timeLeft = d - (secondsSinceEpoch % d);
         
@@ -83,7 +85,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
 
   // Listen to history
   useEffect(() => {
-    const unsubscribes = [30, 60, 180].map(d => {
+    const activeDurations = [30, 60, 180, 300];
+    const unsubscribes = activeDurations.map(d => {
       const q = query(
         collection(db, `game_periods/${d}/history`),
         orderBy('timestamp', 'desc'),
@@ -112,7 +115,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           collection(db, 'bets'),
           where('userId', '==', currentUser.uid),
           where('status', '==', 'pending'),
-          limit(10)
+          limit(20)
         );
         const snapshot = await getDocs(q);
         if (snapshot.empty) return;
@@ -126,7 +129,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           const periodId = bet.periodId;
 
           // Check if we have history for this period
-          const historyEntry = durations[duration].history.find(h => h.periodId === periodId);
+          const historyEntry = durations[duration]?.history.find(h => h.periodId === periodId);
           if (historyEntry) {
              let isWin = false;
              let multiplier = 2; // Default for color/size
@@ -152,7 +155,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
                winAmount,
                resultNumber: historyEntry.number,
                resultColor: historyEntry.color,
-               resultSize: historyEntry.size
+               resultSize: historyEntry.size,
+               settledAt: serverTimestamp()
              });
 
              if (isWin) {
@@ -171,33 +175,34 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
       } catch (e) {
         console.error("Settlement error:", e);
       }
-    }, 5000);
+    }, 3000); // Check every 3s
 
     return () => clearInterval(settleInterval);
   }, [currentUser, durations]);
 
-  // Host logic
+  // Host logic: Ensures results are written to Firestore
   useEffect(() => {
     const hostInterval = setInterval(async () => {
       const now = new Date();
-      [30, 60, 180].forEach(async (d) => {
+      [30, 60, 180, 300].forEach(async (d) => {
+        // Generate current and previous results to be safe
+        const currPeriodId = generatePeriodId(d, now);
         const prevDate = new Date(now.getTime() - d * 1000);
         const prevPeriodId = generatePeriodId(d, prevDate);
         
-        const res = calculateResult(prevPeriodId);
-        const docRef = doc(db, `game_periods/${d}/history`, prevPeriodId);
-        
-        try {
-          await setDoc(docRef, {
-            ...res,
-            periodId: prevPeriodId,
-            timestamp: prevDate.toISOString()
-          }, { merge: true });
-        } catch (e) {
-          // ignore
-        }
+        [prevPeriodId, currPeriodId].forEach(async (pId) => {
+          const res = calculateResult(pId);
+          const docRef = doc(db, `game_periods/${d}/history`, pId);
+          try {
+            await setDoc(docRef, {
+              ...res,
+              periodId: pId,
+              timestamp: now.toISOString() // Approximate
+            }, { merge: true });
+          } catch (e) {}
+        });
       });
-    }, 10000);
+    }, 5000); // Check every 5s
 
     return () => clearInterval(hostInterval);
   }, []);

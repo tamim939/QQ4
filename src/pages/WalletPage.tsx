@@ -139,7 +139,8 @@ const WalletView = ({
   withdrawAmount, 
   setWithdrawAmount, 
   loginPassword, 
-  setLoginPassword 
+  setLoginPassword,
+  transactions
 }: any) => (
   <div className="pb-28 min-h-[calc(100vh-60px)] flex flex-col">
     <div className="bg-white py-4 text-center">
@@ -796,6 +797,7 @@ export default function WalletPage({ initialTab = 'deposit', initialView = 'wall
           setWithdrawAmount={setWithdrawAmount}
           loginPassword={loginPassword}
           setLoginPassword={setLoginPassword}
+          transactions={transactions}
         />
       )}
 

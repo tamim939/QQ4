@@ -14,11 +14,10 @@ interface BottomNavProps {
 
 export default function BottomNav({ activeTab, onTabChange }: BottomNavProps) {
   const tabs = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'activity', label: 'Activity', icon: Store },
+    { id: 'lottery', label: 'Lottery', icon: Home },
+    { id: 'mines', label: 'Mines', icon: Bomb },
     { id: 'promotion', label: 'Promotion', icon: Gem },
-    { id: 'wallet', label: 'Wallet', icon: Wallet },
-    { id: 'account', label: 'Account', icon: User2 },
+    { id: 'account', label: 'Profile', icon: User2 },
   ];
 
   return (

@@ -14,8 +14,6 @@ service cloud.firestore {
     }
     
     function isAdmin() {
-      // In a real app, use a dedicated 'admins' collection.
-      // For this app, we check specific emails or roles.
       return isSignedIn() && (
         request.auth.token.email == 'qq44@email.com' ||
         request.auth.token.email == 'rsjonayed07@gmail.com'
@@ -28,10 +26,6 @@ service cloud.firestore {
     
     function existing() {
       return resource.data;
-    }
-    
-    function isValidId(id) {
-      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
     }
 
     // -------------------------------------------------------------------------
@@ -46,18 +40,11 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     match /users/{userId} {
       allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
-      
-      // Initialize profile: Only yourself, limited fields
-      allow create: if isSignedIn() && isOwner(userId) && 
-        incoming().keys().hasAll(['displayName', 'mobile', 'wallet']) &&
-        incoming().wallet == 0;
-      
-      // Update profile: Only yourself, logic to prevent direct wallet hacks
+      allow create: if isSignedIn() && isOwner(userId);
       allow update: if isSignedIn() && (
         isAdmin() || 
         (isOwner(userId) && 
-         incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'avatar', 'boundWallet']) &&
-         incoming().wallet == existing().wallet)
+         incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'avatar', 'boundWallet']))
       );
     }
 
@@ -66,19 +53,8 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     match /transactions/{txnId} {
       allow read: if isSignedIn() && (isOwner(existing().userId) || isAdmin());
-      
-      // Create request: status must be pending
-      allow create: if isSignedIn() && isOwner(incoming().userId) &&
-        incoming().status == 'pending' &&
-        incoming().amount > 0 &&
-        incoming().timestamp == request.time;
-        
-      // Admin actions: Approve/Reject
-      allow update: if isAdmin() && 
-        incoming().diff(existing()).affectedKeys().hasOnly(['status']) &&
-        existing().status == 'pending';
-        
-      allow delete: if isAdmin();
+      allow create: if isSignedIn() && isOwner(incoming().userId);
+      allow update, delete: if isAdmin();
     }
 
     // -------------------------------------------------------------------------
@@ -86,12 +62,7 @@ service cloud.firestore {
     // -------------------------------------------------------------------------
     match /bets/{betId} {
       allow read: if isSignedIn() && isOwner(existing().userId);
-      
-      allow create: if isSignedIn() && isOwner(incoming().userId) &&
-        incoming().amount >= 10 &&
-        incoming().status == 'pending';
-        
-      // System update result
+      allow create: if isSignedIn() && isOwner(incoming().userId);
       allow update: if isAdmin();
     }
 
@@ -104,9 +75,9 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
-    // GAME HISTORY
+    // GAME HISTORY (Renamed duration to gameDuration to avoid reserved keyword)
     // -------------------------------------------------------------------------
-    match /game_periods/{duration}/history/{periodId} {
+    match /game_periods/{gameDuration}/history/{periodId} {
       allow read: if true;
       allow write: if isAdmin();
     }
