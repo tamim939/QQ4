@@ -41,7 +41,7 @@ export default function Profile({ onNavigateToWallet, onShowGifts, onShowAdmin }
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
   
-  const isAdmin = userData?.mobile === '19093386355';
+  const isAdmin = userData?.mobile === '19093386355' || user?.email === 'qq44@email.com';
 
   const handleLogout = () => {
     auth.signOut();

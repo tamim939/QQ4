@@ -275,7 +275,7 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
   const [adjustAmount, setAdjustAmount] = useState('');
 
   useEffect(() => {
-    const q = query(collection(db, 'users'), limit(20));
+    const q = query(collection(db, 'users'), limit(50));
     return onSnapshot(q, (snapshot) => {
       setUsers(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() })));
     });
@@ -295,27 +295,37 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
     }
   };
 
+  const filtered = users.filter((u) => 
+    u.displayName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    u.mobile?.includes(searchQuery) ||
+    u.userNumericId?.includes(searchQuery)
+  );
+
   return (
     <div className="space-y-4">
-      {users.map((u) => (
+      {filtered.map((u) => (
         <div key={u.uid} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 flex items-center justify-between">
            <div className="flex items-center space-x-4">
-              <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-100">
+              <div className="w-12 h-12 rounded-full overflow-hidden border border-gray-100 flex-shrink-0">
                  <img src={u.avatar} className="w-full h-full object-cover" />
               </div>
               <div className="text-left leading-tight">
                  <p className="text-sm font-black text-gray-800">{u.displayName}</p>
-                 <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Bal: ৳{u.wallet.toFixed(2)}</p>
+                 <div className="flex flex-col space-y-0.5 mt-0.5">
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">ID: {u.userNumericId}</p>
+                    <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Bal: ৳{u.wallet.toFixed(2)}</p>
+                 </div>
               </div>
            </div>
            <button 
             onClick={() => setSelectedUser(u)}
-            className="p-3 bg-[#f1c40f]/10 text-[#f1c40f] rounded-2xl active:scale-95 transition-all"
+            className="p-3 bg-gray-50 text-gray-400 hover:text-[#f1c40f] hover:bg-[#f1c40f]/10 rounded-2xl active:scale-95 transition-all"
            >
               <Settings size={18} />
            </button>
         </div>
       ))}
+      {filtered.length === 0 && <div className="py-20 text-center text-gray-300 font-bold uppercase tracking-widest text-[10px]">No users found</div>}
 
       <AnimatePresence>
          {selectedUser && (
@@ -332,22 +342,27 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
                  animate={{ scale: 1, opacity: 1 }}
                  className="bg-white w-full max-w-sm rounded-[32px] p-8 relative z-10 text-center"
                >
-                  <h3 className="text-lg font-black text-gray-800 mb-6 uppercase tracking-widest">Adjust Balance</h3>
+                  <h3 className="text-lg font-black text-gray-800 mb-2 uppercase tracking-widest">Edit User</h3>
+                  <p className="text-[10px] font-bold text-gray-400 mb-6 font-mono">UID: {selectedUser.uid}</p>
+                  
                   <div className="space-y-4">
-                     <p className="text-[10px] font-bold text-gray-400">Updating for: <span className="text-gray-800">{selectedUser.displayName}</span></p>
-                     <div className="relative">
-                        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#f1c40f] font-black">৳</div>
-                        <input 
-                          type="number"
-                          placeholder="Amount (use - for negative)"
-                          value={adjustAmount}
-                          onChange={(e) => setAdjustAmount(e.target.value)}
-                          className="w-full py-4 pl-10 pr-5 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f]"
-                        />
+                     <div>
+                        <label className="text-[9px] font-black text-gray-400 uppercase tracking-widest block text-left mb-1.5 ml-1">Adjust Wallet</label>
+                        <div className="relative">
+                           <div className="absolute left-5 top-1/2 -translate-y-1/2 text-[#f1c40f] font-black">৳</div>
+                           <input 
+                             type="number"
+                             placeholder="Amount (e.g. 500 or -500)"
+                             value={adjustAmount}
+                             onChange={(e) => setAdjustAmount(e.target.value)}
+                             className="w-full py-4 pl-10 pr-5 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] font-bold text-gray-800"
+                           />
+                        </div>
                      </div>
-                     <div className="flex space-x-3">
-                        <button onClick={() => setSelectedUser(null)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-[10px]">Close</button>
-                        <button onClick={handleAdjustBalance} className="flex-1 py-4 bg-[#f1c40f] text-white rounded-2xl font-black uppercase text-[10px]">Update</button>
+                     
+                     <div className="flex space-x-3 pt-2">
+                        <button onClick={() => setSelectedUser(null)} className="flex-1 py-4 bg-gray-100 text-gray-500 rounded-2xl font-black uppercase text-[10px]">Cancel</button>
+                        <button onClick={handleAdjustBalance} className="flex-1 py-4 bg-[#f1c40f] text-white rounded-2xl font-black uppercase text-[10px] shadow-lg shadow-[#f1c40f]/20">Apply Changes</button>
                      </div>
                   </div>
                </motion.div>

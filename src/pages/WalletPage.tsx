@@ -439,113 +439,122 @@ const PaymentView = ({
   setTxnId, 
   handleDepositSubmit, 
   isSubmitting, 
-  success, 
   methods 
-}: any) => (
-  <div className="fixed inset-0 bg-white z-[60] flex flex-col">
-    <div className="bg-white px-4 py-4 flex items-center border-b border-gray-50">
-      <button 
-        onClick={() => setView('wallet')}
-        className="p-2 -ml-2 text-gray-400 active:scale-90 transition-all"
-      >
-        <ChevronLeft size={24} strokeWidth={3} />
-      </button>
-      <h2 className="flex-1 text-center font-black text-gray-800 pr-8">Payment Details</h2>
-    </div>
+}: any) => {
+  const methodData = methods.find((m: any) => m.id === selectedMethod);
+  const now = new Date();
+  const formattedDate = `${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}, ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
 
-    <div className="flex-1 overflow-y-auto px-4 py-8 space-y-8 no-scrollbar text-left font-sans">
-      <div className="bg-gray-50 rounded-[32px] p-6 text-center border border-gray-100">
-        <img 
-          src={methods.find((m: any) => m.id === selectedMethod)?.icon} 
-          alt="method" 
-          className="w-16 h-16 mx-auto mb-4 object-contain"
-        />
-        <h3 className="text-xl font-black text-gray-800">৳ {amount}</h3>
-        <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Total Payable</p>
+  return (
+    <div className="fixed inset-0 bg-[#f7f8fa] z-[60] flex flex-col font-sans">
+      {/* Header */}
+      <div className="bg-white px-4 py-4 flex flex-col items-center border-b border-gray-100 relative">
+        <button 
+          onClick={() => setView('wallet')}
+          className="absolute left-4 top-1/2 -translate-y-1/2 p-2 text-gray-400 active:scale-90 transition-all font-black"
+        >
+          <X size={24} strokeWidth={3} />
+        </button>
+        <h2 className="text-xl font-black text-gray-800 tracking-tight">Payment</h2>
+        <p className="text-[10px] font-bold text-gray-300 mt-0.5">{formattedDate}</p>
       </div>
 
-      <div className="space-y-4">
-        <div className="flex items-center space-x-2">
-          <div className="w-1.5 h-4 bg-[#f1c40f] rounded-full" />
-          <h3 className="text-sm font-black text-gray-800">Payment Instructions</h3>
-        </div>
-        <div className="bg-white rounded-2xl p-5 border border-gray-100 space-y-4">
-           <div className="flex justify-between items-start">
-              <div className="text-left">
-                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Send Money To</p>
-                <p className="text-lg font-black text-gray-800 tracking-tight">
-                  {methods.find((m: any) => m.id === selectedMethod)?.number}
-                </p>
+      <div className="flex-1 overflow-y-auto px-4 py-8 no-scrollbar text-left">
+        {/* Pink Main Container */}
+        <div className="bg-[#e91e63] rounded-[24px] p-6 space-y-6 shadow-xl shadow-gray-200">
+           {/* Alerts in Bengali */}
+           <div className="space-y-1">
+              <p className="text-[13px] font-black text-white leading-tight">অনুগ্রহ করে একই পরিমাণ স্থানান্তর করুন এবং ব্যর্থ এড়াতে সঠিক TxnID পূরণ করুন</p>
+              <div className="flex items-center space-x-2 mt-4">
+                 <p className="text-[13px] font-black text-white">এই বিকাশ অ্যাকাউন্টে অর্থ প্রদান করতে</p>
+                 <span className="bg-[#b0003a] text-white px-3 py-1 rounded-md text-[11px] font-black">সেন্ট মানি</span>
               </div>
+              <p className="text-[13px] font-black text-white">ব্যবহার করুন</p>
+           </div>
+
+           {/* Inner Details Card */}
+           <div className="bg-white rounded-2xl p-6 space-y-5">
+              <div className="flex justify-between items-center">
+                 <p className="text-sm font-black text-gray-800">ওয়ালেট</p>
+                 <div className="flex items-center space-x-1">
+                    <img src={methodData?.icon} className="w-5 h-5 object-contain" alt="icon" />
+                    <span className="text-sm font-black text-[#e91e63]">{selectedMethod === 'bkash' ? 'bKash' : 'Nagad'}</span>
+                 </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                 <p className="text-sm font-black text-gray-800">সংখ্যা</p>
+                 <div className="flex items-center space-x-2">
+                    <span className="text-sm font-black text-blue-500">{methodData?.number}</span>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(methodData?.number || '');
+                        toast.success('Number copied!');
+                      }}
+                      className="text-blue-500 bg-blue-50 p-1 rounded-md"
+                    >
+                       <Copy size={16} />
+                    </button>
+                 </div>
+              </div>
+
+              <div className="flex justify-between items-center">
+                 <p className="text-sm font-black text-gray-800">পরিমাণ</p>
+                 <div className="flex items-center space-x-2">
+                    <span className="text-sm font-black text-emerald-500">{amount}</span>
+                    <button 
+                       onClick={() => {
+                        navigator.clipboard.writeText(amount.toString());
+                        toast.success('Amount copied!');
+                      }}
+                      className="text-emerald-500 bg-emerald-50 p-1 rounded-md"
+                    >
+                       <Copy size={16} />
+                    </button>
+                 </div>
+              </div>
+           </div>
+
+           {/* Input Section */}
+           <div className="space-y-4">
+              <p className="text-[13px] font-black text-white text-center">রিচার্জ সম্পূর্ণ করতে অনুগ্রহ করে লেনদেন আইডি লিখুন</p>
+              <input 
+                type="text"
+                placeholder="Transaction ID"
+                value={txnId}
+                onChange={(e) => setTxnId(e.target.value)}
+                className="w-full bg-white border-2 border-gray-100 rounded-2xl py-5 px-6 font-bold text-gray-800 outline-none focus:border-[#f1c40f] placeholder:text-gray-300"
+              />
               <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(methods.find((m: any) => m.id === selectedMethod)?.number || '');
-                  toast.success('Number copied!');
-                }}
-                className="bg-[#f1c40f]/10 text-[#f1c40f] p-2 rounded-xl active:scale-90 transition-all"
+                onClick={handleDepositSubmit}
+                disabled={!txnId || isSubmitting}
+                className="w-full bg-[#f4511e] text-white py-5 rounded-[20px] font-black text-lg shadow-xl shadow-black/10 active:scale-95 transition-all disabled:opacity-50"
               >
-                <Copy size={20} />
+                {isSubmitting ? '...' : 'জমা দিন'}
               </button>
            </div>
-           <div className="p-3 bg-amber-50 rounded-xl border border-amber-100 text-left">
-              <p className="text-[10px] font-bold text-amber-800 leading-tight">
-                Please copy the number above and send money through your {selectedMethod} app. After successful payment, enter the Transaction ID below.
-              </p>
+        </div>
+
+        {/* Explanation Section */}
+        <div className="mt-8 space-y-6 px-2">
+           <h3 className="text-blue-700 font-black text-lg">ব্যাখ্যা:</h3>
+           
+           <div className="flex space-x-3">
+              <div className="w-5 h-5 rounded-full bg-blue-600 text-white flex items-center justify-center flex-shrink-0 text-[10px] font-black mt-1">১.</div>
+              <div className="space-y-2">
+                 <p className="text-[15px] font-black text-gray-700">ওয়ালেট জমা ব্যবহারকারীদের জন্য নির্দেশিকা</p>
+                 <p className="text-xs font-bold text-gray-400 leading-relaxed">
+                   নির্দেশিকা ম্যাচিং প্রক্রিয়া সম্পন্ন হওয়ার পর এবং নির্ধারিত নিয়ন্ত্রিত ওয়ালেট অ্যাকাউন্ট প্রাপ্তির পর বিনিয়োগকারীদের অবশ্যই তাদের ব্যক্তিগত ওয়ালেট অ্যাকাউন্ট ব্যবহার করে অর্থ প্রেরণ করতে হবে এবং সেই অর্থ নির্দিষ্ট করা নিয়মনীতির অনুযায়ী করতে হবে।
+                 </p>
+              </div>
            </div>
         </div>
-      </div>
 
-      <div className="space-y-4 pb-20">
-         <div className="space-y-2 text-left">
-            <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Transaction ID (TrxID)</label>
-            <input 
-              type="text"
-              placeholder="Enter 10-digit ID"
-              autoComplete="off"
-              value={txnId}
-              onChange={(e) => setTxnId(e.target.value)}
-              className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 px-6 font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all"
-            />
-         </div>
-
-         <button 
-          disabled={!txnId || isSubmitting}
-          onClick={handleDepositSubmit}
-          className="w-full bg-[#f1c40f] text-white py-5 rounded-[24px] font-black text-lg shadow-xl shadow-[#f1c40f]/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
-        >
-          {isSubmitting ? (
-            <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
-          ) : (
-            'জমা দিন'
-          )}
-        </button>
+        <div className="h-20" />
       </div>
     </div>
-
-    <AnimatePresence>
-       {success && (
-         <motion.div 
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          className="fixed inset-0 bg-white/90 backdrop-blur-md z-[70] flex items-center justify-center p-8"
-         >
-            <motion.div 
-              initial={{ scale: 0.5, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              className="text-center space-y-4"
-            >
-               <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-green-500/30">
-                  <Check size={48} strokeWidth={4} className="text-white" />
-               </div>
-               <h3 className="text-2xl font-black text-gray-800">Success!</h3>
-               <p className="text-gray-500 font-bold">আপনার ডিপোজিটটি গ্রহণ করা হয়েছে এবং এটি বর্তমানে পেন্ডিং রয়েছে।</p>
-            </motion.div>
-         </motion.div>
-       )}
-    </AnimatePresence>
-  </div>
-);
+  );
+};
 
 export default function WalletPage({ initialTab = 'deposit', initialView = 'wallet' }: { initialTab?: WalletTab, initialView?: ViewState }) {
   const { userData, user } = useAuth();
@@ -619,13 +628,10 @@ export default function WalletPage({ initialTab = 'deposit', initialView = 'wall
         status: 'pending',
         timestamp: serverTimestamp()
       });
-      setSuccess(true);
-      setTimeout(() => {
-        setSuccess(false);
-        setView('history');
-        setTxnId('');
-        setAmount('');
-      }, 1000); // reduced to 1s for faster redirection
+      toast.success('Submitted successfully!');
+      setView('history');
+      setTxnId('');
+      setAmount('');
     } catch (error) {
       toast.error('Failed to submit deposit');
     } finally {
