@@ -2,22 +2,23 @@
   "entities": {
     "User": {
       "title": "User Profile",
-      "description": "User account details, wallet balance, and referral information.",
+      "description": "User account details, wallet balance, and rebate information.",
       "type": "object",
       "properties": {
         "uid": { "type": "string" },
+        "userNumericId": { "type": "string" },
         "mobile": { "type": "string" },
         "displayName": { "type": "string" },
         "avatar": { "type": "string" },
         "wallet": { "type": "number" },
         "referCode": { "type": "string" },
-        "referredBy": { "type": "string" },
-        "totalCommission": { "type": "number" },
+        "totalWager": { "type": "number" },
+        "claimedRebate": { "type": "number" },
         "hasDeposited": { "type": "boolean" },
         "hideDepositBonus": { "type": "boolean" },
         "lastBonusClaimDate": { "type": "string", "format": "date" }
       },
-      "required": ["uid", "mobile", "wallet"]
+      "required": ["uid", "mobile", "wallet", "userNumericId"]
     },
     "GamePeriod": {
       "title": "Game Period",
