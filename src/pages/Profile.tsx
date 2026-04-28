@@ -43,7 +43,7 @@ export default function Profile() {
   };
 
   const walletBalance = typeof userData?.wallet === 'number' ? userData.wallet : 0;
-  const username = userData?.displayName || userData?.mobile || "User";
+  const username = userData?.displayName || userData?.mobile || "ইউজার";
   const uid = userData?.uid?.slice(0, 6) || "000000";
 
   const avatar = userData?.avatar || "https://img.freepik.com/premium-photo/profile-avatar-white-male-with-yellow-hair-angry-surprised-expression_1020697-38010.jpg";
@@ -304,13 +304,13 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
 
           <div className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Name</label>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">আপনার নাম</label>
               <input 
                 type="text"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="w-full px-5 py-4 bg-gray-50 rounded-2xl border border-gray-100 outline-none focus:border-[#f1c40f] transition-all font-bold text-gray-700"
-                placeholder="Enter your name"
+                placeholder="নতুন নাম দিন"
               />
             </div>
 
@@ -321,14 +321,14 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
                 onClick={onClose}
                 className="flex-1 py-4 bg-gray-100 text-gray-500 font-black rounded-2xl uppercase tracking-tighter active:scale-95 transition-all"
               >
-                Cancel
+                বাতিল
               </button>
               <button 
                 disabled={loading}
                 onClick={handleSave}
                 className="flex-1 py-4 bg-[#f1c40f] text-white font-black rounded-2xl uppercase tracking-tighter shadow-lg shadow-[#f1c40f]/20 active:scale-95 transition-all disabled:opacity-50"
               >
-                {loading ? 'Saving...' : 'Save'}
+                {loading ? 'সেভ হচ্ছে...' : 'সেভ'}
               </button>
             </div>
           </div>

@@ -66,33 +66,11 @@ function MainApp() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <main className="flex-1 overflow-y-auto no-scrollbar">
-        <AnimatePresence mode="wait">
-          {activeTab === 'home' && (
-            <motion.div key="home" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Home onSelectGame={(id) => setActiveGame(id)} />
-            </motion.div>
-          )}
-          {activeTab === 'activity' && (
-            <motion.div key="activity" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Activity />
-            </motion.div>
-          )}
-          {activeTab === 'promotion' && (
-            <motion.div key="promotion" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Promotion />
-            </motion.div>
-          )}
-          {activeTab === 'wallet' && (
-            <motion.div key="wallet" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <WalletPage />
-            </motion.div>
-          )}
-          {activeTab === 'account' && (
-            <motion.div key="account" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Profile />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {activeTab === 'home' && <Home onSelectGame={(id) => setActiveGame(id)} />}
+        {activeTab === 'activity' && <Activity />}
+        {activeTab === 'promotion' && <Promotion />}
+        {activeTab === 'wallet' && <WalletPage />}
+        {activeTab === 'account' && <Profile />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={(tab) => setActiveTab(tab)} />
     </div>

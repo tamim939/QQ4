@@ -1,12 +1,11 @@
 import { 
   Trophy, 
-  Users, 
   Gift, 
-  Target, 
-  ChevronRight, 
-  Sparkles,
-  Flame,
-  Calendar
+  Calendar,
+  Download,
+  Headphones,
+  Award,
+  Wallet
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { motion } from 'motion/react';
@@ -14,120 +13,88 @@ import { motion } from 'motion/react';
 export default function Activity() {
   const { userData } = useAuth();
 
-  if (!userData) return null;
-
   return (
-    <div className="min-h-screen bg-[#f1f2f6] pb-24">
-      {/* Header */}
-      <header className="bg-gradient-to-br from-theme-red to-orange-600 px-4 pt-12 pb-24 text-white text-center rounded-b-[40px] relative overflow-hidden shadow-xl">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -mr-10 -mt-10" />
-        <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full blur-3xl -ml-10 -mb-10" />
-        <h1 className="text-2xl font-black italic tracking-tighter mb-1">ACTIVITY CENTER</h1>
-        <p className="text-[10px] font-bold opacity-70 uppercase tracking-widest">Rewards & Promotions</p>
+    <div className="min-h-screen bg-gray-50 pb-24 relative text-left">
+      {/* Top Navigation */}
+      <header className="bg-white px-4 py-3 flex justify-between items-center border-b border-gray-100">
+        <h1 className="text-xl font-black italic text-[#f1c40f] tracking-tighter">MK WIN 25</h1>
+        <div className="flex space-x-4 text-gray-400">
+          <Download size={20} strokeWidth={2.5} />
+          <Headphones size={20} strokeWidth={2.5} />
+        </div>
       </header>
 
-      <div className="px-4 -mt-16 space-y-4">
-        {/* Daily Bonus Card */}
-        <motion.div 
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="bg-white rounded-3xl p-6 shadow-md border border-white flex justify-between items-center relative overflow-hidden"
-        >
-          <div className="absolute left-0 top-0 w-1.5 h-full bg-theme-yellow" />
-          <div className="flex items-center space-x-4">
-            <div className="bg-theme-yellow/10 p-3 rounded-2xl text-theme-yellow">
-               <Calendar size={28} className="stroke-[2.5]" />
+      {/* Activity Center Header Card */}
+      <div className="px-4 py-4">
+        <div className="bg-[#f1c40f] rounded-[30px] p-6 text-white text-center relative shadow-lg shadow-[#f1c40f]/20">
+          <h2 className="text-lg font-bold mb-8">Activity Center</h2>
+          
+          <div className="flex justify-between items-center mb-8 px-4">
+            <div className="flex-1">
+              <p className="text-[10px] font-medium opacity-90 mb-1">Today's bonus</p>
+              <p className="text-2xl font-black tracking-tight">৳0.00</p>
             </div>
-            <div>
-               <p className="text-sm font-black text-gray-800">Attendance Bonus</p>
-               <p className="text-[10px] font-bold text-gray-400">Claim ৳5 - ৳100 daily login reward</p>
+            <div className="w-[1px] h-10 bg-white/30" />
+            <div className="flex-1">
+              <p className="text-[10px] font-medium opacity-90 mb-1">Total bonus</p>
+              <p className="text-2xl font-black tracking-tight">৳0.00</p>
             </div>
           </div>
-          <button className="bg-theme-yellow text-white px-4 py-2 rounded-xl text-[10px] font-black shadow-lg shadow-theme-yellow/20">Sign In</button>
-        </motion.div>
 
-        {/* Info Grid */}
-        <div className="grid grid-cols-2 gap-4">
-           <ActivityCard 
-             icon={Users} 
-             title="Refer & Earn" 
-             desc="Get ৳100 per friend" 
-             color="text-theme-blue" 
-             bg="bg-theme-blue/10" 
-           />
-           <ActivityCard 
-             icon={Trophy} 
-             title="Tournament" 
-             desc="Win share of ৳10,000" 
-             color="text-win" 
-             bg="bg-win/10" 
-           />
-           <ActivityCard 
-             icon={Gift} 
-             title="Jackpot" 
-             desc="Unlock lucky boxes" 
-             color="text-theme-red" 
-             bg="bg-theme-red/10" 
-           />
-           <ActivityCard 
-             icon={Target} 
-             title="Missions" 
-             desc="Complete daily tasks" 
-             color="text-gray-700" 
-             bg="bg-gray-100" 
-           />
-        </div>
-
-        {/* Hot Events Section */}
-        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 space-y-6">
-           <div className="flex items-center space-x-2">
-              <Flame className="text-theme-red animate-pulse" size={18} />
-              <h2 className="text-sm font-black text-gray-800 uppercase tracking-widest">Hot Promotions</h2>
-           </div>
-
-           <div className="space-y-4">
-              <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-900 group">
-                 <img 
-                    src="https://img.freepik.com/free-vector/gradient-boxing-banner-template_23-2149021271.jpg" 
-                    className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700"
-                    alt="Promo"
-                 />
-                 <div className="absolute inset-0 p-4 flex flex-col justify-end">
-                    <div className="bg-win self-start px-2 py-0.5 rounded text-[8px] font-black text-white uppercase mb-2">Live Now</div>
-                    <h3 className="text-white font-black italic">FIRST DEPOSIT BONUS</h3>
-                    <p className="text-white/70 text-[10px] font-bold">GET 100% EXTRA BALANCE ON YOUR FIRST RECHARGE</p>
-                 </div>
-              </div>
-
-              <div className="relative rounded-2xl overflow-hidden aspect-video bg-gray-900 group">
-                 <img 
-                    src="https://img.freepik.com/free-vector/cyber-monday-background-with-glitch-effect_23-2148705058.jpg" 
-                    className="w-full h-full object-cover opacity-60 group-hover:scale-110 transition-transform duration-700"
-                    alt="Promo"
-                 />
-                 <div className="absolute inset-0 p-4 flex flex-col justify-end">
-                    <div className="bg-theme-yellow self-start px-2 py-0.5 rounded text-[8px] font-black text-white uppercase mb-2">Weekly</div>
-                    <h3 className="text-white font-black italic">REFERRAL CHAMPIONSHIP</h3>
-                    <p className="text-white/70 text-[10px] font-bold">SHARE TOP ৳100,000 PRIZE POOL BY INVITING FRIENDS</p>
-                 </div>
-              </div>
-           </div>
+          <div className="absolute left-0 right-0 bottom-0 translate-y-1/2 flex justify-center">
+            <button className="bg-white text-[#f1c40f] px-12 py-3 rounded-full text-xs font-black shadow-md shadow-[#f1c40f]/10 active:scale-95 transition-all">
+              Bonus details
+            </button>
+          </div>
         </div>
       </div>
+
+      <div className="px-4 mt-12 space-y-6">
+        {/* Main Icon Grid */}
+        <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 grid grid-cols-4 gap-4">
+          <ActivityIcon icon={Award} label="Activity Award" color="bg-rose-50" iconColor="text-rose-500" />
+          <ActivityIcon icon={Wallet} label="Betting rebate" color="bg-orange-50" iconColor="text-orange-500" />
+          <ActivityIcon icon={Trophy} label="Super Jackpot" color="bg-emerald-50" iconColor="text-emerald-500" />
+          <ActivityIcon icon={Gift} label="Invite Wheel" color="bg-purple-50" iconColor="text-purple-500" />
+        </div>
+
+        {/* Large Feature Cards */}
+        <div className="grid grid-cols-2 gap-4">
+          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 active:scale-95 transition-transform">
+            <div className="h-28 bg-[#f56565] flex items-center justify-center relative">
+               <Gift size={32} className="text-white relative z-10" />
+            </div>
+            <div className="p-3 text-center border-t border-gray-50">
+              <p className="text-sm font-black text-gray-700">Gifts</p>
+            </div>
+          </div>
+
+          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 active:scale-95 transition-transform">
+            <div className="h-28 bg-[#4299e1] flex items-center justify-center relative">
+               <Calendar size={32} className="text-white relative z-10" />
+            </div>
+            <div className="p-3 text-center border-t border-gray-50">
+              <p className="text-sm font-black text-gray-700">Attendance</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating Support Button */}
+      <button className="fixed right-6 bottom-24 w-12 h-12 bg-[#f1c40f] rounded-full flex items-center justify-center text-white shadow-xl z-40 border-4 border-white/50 active:scale-95 transition-all">
+        <Headphones size={24} strokeWidth={2.5} />
+      </button>
     </div>
   );
 }
 
-function ActivityCard({ icon: Icon, title, desc, color, bg }: { icon: any, title: string, desc: string, color: string, bg: string }) {
+function ActivityIcon({ icon: Icon, label, color, iconColor }: { icon: any, label: string, color: string, iconColor: string }) {
   return (
-    <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-3 active:scale-95 transition-all cursor-pointer">
-       <div className={`${bg} ${color} w-10 h-10 rounded-2xl flex items-center justify-center`}>
-          <Icon size={22} className="stroke-[2.5]" />
-       </div>
-       <div>
-          <p className="text-xs font-black text-gray-800">{title}</p>
-          <p className="text-[9px] font-bold text-gray-400">{desc}</p>
-       </div>
+    <div className="flex flex-col items-center space-y-2 cursor-pointer active:scale-95 transition-transform">
+      <div className={`${color} ${iconColor} w-12 h-12 rounded-2xl flex items-center justify-center`}>
+        <Icon size={24} strokeWidth={2.5} />
+      </div>
+      <p className="text-[10px] font-bold text-gray-500 text-center leading-tight whitespace-pre-wrap">{label}</p>
     </div>
   );
 }
