@@ -129,9 +129,9 @@ export default function Profile() {
           </div>
 
           <div className="grid grid-cols-4 gap-2 mt-8">
-            <BalanceAction icon={Wallet} label="Wallet" color="bg-[#ff7675]" />
-            <BalanceAction icon={ArrowDownToLine} label="Deposit" color="bg-[#ffa502]" isCircle />
-            <BalanceAction icon={ArrowUpToLine} label="Withdraw" color="bg-[#1e90ff]" isCircle />
+            <BalanceAction icon={Wallet} label="Wallet" color="bg-[#ff7675]" onClick={() => window.location.href = '/wallet'} />
+            <BalanceAction icon={ArrowDownToLine} label="Deposit" color="bg-[#ffa502]" isCircle onClick={() => window.location.href = '/wallet#deposit'} />
+            <BalanceAction icon={ArrowUpToLine} label="Withdraw" color="bg-[#1e90ff]" isCircle onClick={() => window.location.href = '/wallet#withdraw'} />
             <BalanceAction icon={Gem} label="VIP" color="bg-[#2ed573]" />
           </div>
         </div>
@@ -205,9 +205,9 @@ export default function Profile() {
   );
 }
 
-function BalanceAction({ icon: Icon, label, color, isCircle }: { icon: any, label: string, color: string, isCircle?: boolean }) {
+function BalanceAction({ icon: Icon, label, color, isCircle, onClick }: { icon: any, label: string, color: string, isCircle?: boolean, onClick?: () => void }) {
   return (
-    <div className="flex flex-col items-center space-y-2">
+    <div className="flex flex-col items-center space-y-2 cursor-pointer active:scale-95 transition-transform" onClick={onClick}>
       <div className="w-12 h-12 flex items-center justify-center">
          <div className={`${color} p-2 ${isCircle ? 'rounded-full' : 'rounded-xl'} shadow-lg shadow-black/5`}>
            <Icon size={22} className="text-white stroke-[2.5]" />

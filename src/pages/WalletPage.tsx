@@ -46,7 +46,18 @@ export default function WalletPage() {
   const [txnId, setTxnId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [walletTab, setWalletTab] = useState<WalletTab>('deposit');
+  const [walletTab, setWalletTab] = useState<WalletTab>(
+    window.location.hash === '#withdraw' ? 'withdraw' : 'deposit'
+  );
+
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (window.location.hash === '#withdraw') setWalletTab('withdraw');
+      if (window.location.hash === '#deposit') setWalletTab('deposit');
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
   const [isBindModalOpen, setIsBindModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -706,11 +717,194 @@ export default function WalletPage() {
       {view === 'history' && <HistoryView />}
       
       <AnimatePresence>
-        {view === 'payment' && <PaymentView />}
+        {view === 'payment' && (
+          <motion.div 
+            initial={{ x: '100%' }}
+            animate={{ x: 0 }}
+            exit={{ x: '100%' }}
+            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+            className="fixed inset-0 bg-white z-[60] flex flex-col"
+          >
+            {/* Payment Header */}
+            <div className="bg-white px-4 py-4 flex items-center border-b border-gray-50">
+              <button 
+                onClick={() => setView('wallet')}
+                className="p-2 -ml-2 text-gray-400 active:scale-90 transition-all"
+              >
+                <ChevronLeft size={24} strokeWidth={3} />
+              </button>
+              <h2 className="flex-1 text-center font-black text-gray-800 pr-8">Payment Details</h2>
+            </div>
+
+            <div className="flex-1 overflow-y-auto px-4 py-8 space-y-8">
+              {/* Method Card */}
+              <div className="bg-gray-50 rounded-[32px] p-6 text-center border border-gray-100">
+                <img 
+                  src={methods.find(m => m.id === selectedMethod)?.icon} 
+                  alt="method" 
+                  className="w-16 h-16 mx-auto mb-4 object-contain"
+                />
+                <h3 className="text-xl font-black text-gray-800">৳ {amount}</h3>
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1">Total Payable</p>
+              </div>
+
+              {/* Instructions */}
+              <div className="space-y-4">
+                <div className="flex items-center space-x-2">
+                  <div className="w-1.5 h-4 bg-[#f1c40f] rounded-full" />
+                  <h3 className="text-sm font-black text-gray-800">Payment Instructions</h3>
+                </div>
+                <div className="bg-white rounded-2xl p-5 border border-gray-100 space-y-4">
+                   <div className="flex justify-between items-start">
+                      <div>
+                        <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Send Money To</p>
+                        <p className="text-lg font-black text-gray-800 tracking-tight">01700-000000</p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText('01700000000');
+                          toast.success('Number copied!');
+                        }}
+                        className="bg-[#f1c40f]/10 text-[#f1c40f] p-2 rounded-xl active:scale-90 transition-all"
+                      >
+                        <Copy size={20} />
+                      </button>
+                   </div>
+                   <div className="p-3 bg-amber-50 rounded-xl border border-amber-100">
+                      <p className="text-[10px] font-bold text-amber-800 leading-tight">
+                        Please copy the number above and send money through your {selectedMethod} app. After successful payment, enter the Transaction ID below.
+                      </p>
+                   </div>
+                </div>
+              </div>
+
+              {/* Input Section */}
+              <div className="space-y-4">
+                 <div className="space-y-2">
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">Transaction ID (TrxID)</label>
+                    <input 
+                      type="text"
+                      placeholder="Enter 10-digit ID"
+                      value={txnId}
+                      onChange={(e) => setTxnId(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 px-6 font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all"
+                    />
+                 </div>
+
+                 <button 
+                  disabled={!txnId || isSubmitting}
+                  onClick={handleDepositSubmit}
+                  className="w-full bg-[#f1c40f] text-white py-5 rounded-[24px] font-black text-lg shadow-xl shadow-[#f1c40f]/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+                >
+                  {isSubmitting ? (
+                    <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+                  ) : (
+                    'জমা দিন'
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Success Overlay */}
+            <AnimatePresence>
+               {success && (
+                 <motion.div 
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="fixed inset-0 bg-white/90 backdrop-blur-md z-[70] flex items-center justify-center p-8"
+                 >
+                    <motion.div 
+                      initial={{ scale: 0.5, y: 20 }}
+                      animate={{ scale: 1, y: 0 }}
+                      className="text-center space-y-4"
+                    >
+                       <div className="w-24 h-24 bg-green-500 rounded-full flex items-center justify-center mx-auto shadow-xl shadow-green-500/30">
+                          <Check size={48} strokeWidth={4} className="text-white" />
+                       </div>
+                       <h3 className="text-2xl font-black text-gray-800">Success!</h3>
+                       <p className="text-gray-500 font-bold">আপনার ডিপোজিটটি গ্রহণ করা হয়েছে এবং এটি বর্তমানে পেন্ডিং রয়েছে।</p>
+                    </motion.div>
+                 </motion.div>
+               )}
+            </AnimatePresence>
+          </motion.div>
+        )}
       </AnimatePresence>
 
       <AnimatePresence>
-        {isBindModalOpen && <BindModal />}
+        {isBindModalOpen && (
+          <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-6">
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              className="bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl p-6"
+            >
+              <h3 className="text-xl font-black text-center text-gray-800 mb-8 tracking-widest uppercase">BIND WALLET</h3>
+              
+              <div className="flex space-x-4 mb-8">
+                <button 
+                  onClick={() => setTempBindMethod('BKASH')}
+                  className={`flex-1 aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 transition-all relative ${
+                    tempBindMethod === 'BKASH' ? 'border-[#f1c40f] bg-[#f1c40f]/5' : 'border-gray-100'
+                  }`}
+                >
+                  <img src="https://seeklogo.com/images/B/bkash-logo-835789094A-seeklogo.com.png" className="w-12 h-12 object-contain mb-2" alt="bkash" />
+                  <span className="text-[10px] font-black uppercase text-gray-400">BKASH</span>
+                  {tempBindMethod === 'BKASH' && (
+                    <div className="absolute top-2 right-2 text-[#f1c40f]">
+                      <Check size={16} strokeWidth={4} />
+                    </div>
+                  )}
+                </button>
+                <button 
+                  onClick={() => setTempBindMethod('Nagad')}
+                  className={`flex-1 aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 transition-all relative ${
+                    tempBindMethod === 'Nagad' ? 'border-[#f1c40f] bg-[#f1c40f]/5' : 'border-gray-100'
+                  }`}
+                >
+                  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1024px-Nagad_Logo.svg.png" className="w-12 h-12 object-contain mb-2" alt="nagad" />
+                  <span className="text-[10px] font-black uppercase text-gray-400">NAGAD</span>
+                  {tempBindMethod === 'Nagad' && (
+                    <div className="absolute top-2 right-2 text-[#f1c40f]">
+                      <Check size={16} strokeWidth={4} />
+                    </div>
+                  )}
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                 <div>
+                    <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">WALLET NUMBER</label>
+                    <input 
+                      type="text" 
+                      placeholder="017xxxxxxxx"
+                      value={tempBindNumber}
+                      onChange={(e) => setTempBindNumber(e.target.value)}
+                      className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all"
+                    />
+                 </div>
+
+                 <div className="flex space-x-4 pt-4">
+                    <button 
+                      onClick={() => setIsBindModalOpen(false)}
+                      className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-[20px] font-black uppercase text-sm"
+                    >
+                      CANCEL
+                    </button>
+                    <button 
+                      onClick={handleBindWallet}
+                      disabled={isBinding}
+                      className="flex-1 bg-[#f1c40f] text-white py-4 rounded-[20px] font-black uppercase text-sm shadow-xl shadow-[#f1c40f]/20"
+                    >
+                      {isBinding ? '...' : 'SAVE'}
+                    </button>
+                 </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
       </AnimatePresence>
 
       {/* Floating Customer Support */}
