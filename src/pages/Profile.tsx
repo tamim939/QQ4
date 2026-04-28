@@ -31,7 +31,7 @@ import { handleFirestoreError, OperationType } from '../lib/utils';
 
 import toast from 'react-hot-toast';
 
-export default function Profile({ onNavigateToWallet }: { onNavigateToWallet?: (tab: 'deposit' | 'withdraw', view?: 'wallet' | 'payment' | 'history') => void }) {
+export default function Profile({ onNavigateToWallet, onShowGifts }: { onNavigateToWallet?: (tab: 'deposit' | 'withdraw', view?: 'wallet' | 'payment' | 'history') => void, onShowGifts?: () => void }) {
   const { userData } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -168,7 +168,7 @@ export default function Profile({ onNavigateToWallet }: { onNavigateToWallet?: (
         {/* Standard Menu List */}
         <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100">
           <MenuListItem icon={Bell} label="Notification" count={0} color="text-red-500" />
-          <MenuListItem icon={Gift} label="Gifts" />
+          <MenuListItem icon={Gift} label="Gifts" onClick={onShowGifts} />
           <MenuListItem icon={BarChart} label="Game statistics" />
           <MenuListItem icon={Globe} label="Language" extra="English" />
         </div>
@@ -235,9 +235,12 @@ function FeatureCard({ icon: Icon, label, sub, color, onClick }: { icon: any, la
   );
 }
 
-function MenuListItem({ icon: Icon, label, count, extra, color }: { icon: any, label: string, count?: number, extra?: string, color?: string }) {
+function MenuListItem({ icon: Icon, label, count, extra, color, onClick }: { icon: any, label: string, count?: number, extra?: string, color?: string, onClick?: () => void }) {
   return (
-    <button className="w-full flex items-center justify-between p-4 px-6 hover:bg-gray-50 transition-colors border-b last:border-0 border-gray-50">
+    <button 
+      onClick={onClick}
+      className="w-full flex items-center justify-between p-4 px-6 hover:bg-gray-50 transition-colors border-b last:border-0 border-gray-50 cursor-pointer"
+    >
       <div className="flex items-center space-x-4 text-left">
         <Icon className={color || "text-[#f1c40f]"} size={22} strokeWidth={2.5} />
         <span className="text-[13px] font-bold text-gray-700">{label}</span>

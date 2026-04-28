@@ -8,6 +8,7 @@ import Mines from './pages/Mines';
 import Promotion from './pages/Promotion';
 import Activity from './pages/Activity';
 import WalletPage from './pages/WalletPage';
+import Gifts from './pages/Gifts';
 import BottomNav from './components/Layout/BottomNav';
 import { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
@@ -23,6 +24,7 @@ function MainApp() {
   const [isInitializing, setIsInitializing] = useState(true);
   const [initialWalletTab, setInitialWalletTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [initialView, setInitialView] = useState<ViewState>('wallet');
+  const [showGifts, setShowGifts] = useState(false);
 
   const navigateToWallet = (tab: 'deposit' | 'withdraw' = 'deposit', view: ViewState = 'wallet') => {
     setInitialWalletTab(tab);
@@ -73,14 +75,18 @@ function MainApp() {
     return <Mines onBack={() => setActiveGame(null)} />;
   }
 
+  if (showGifts) {
+    return <Gifts onBack={() => setShowGifts(false)} />;
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <main className="flex-1 overflow-y-auto no-scrollbar">
         {activeTab === 'home' && <Home onSelectGame={(id) => setActiveGame(id)} />}
-        {activeTab === 'activity' && <Activity />}
+        {activeTab === 'activity' && <Activity onShowGifts={() => setShowGifts(true)} />}
         {activeTab === 'promotion' && <Promotion />}
         {activeTab === 'wallet' && <WalletPage initialTab={initialWalletTab} initialView={initialView} />}
-        {activeTab === 'account' && <Profile onNavigateToWallet={navigateToWallet} />}
+        {activeTab === 'account' && <Profile onNavigateToWallet={navigateToWallet} onShowGifts={() => setShowGifts(true)} />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={(tab) => setActiveTab(tab)} />
     </div>

@@ -16,7 +16,7 @@ import { useAuth } from '../context/AuthContext';
 import { motion, AnimatePresence } from 'motion/react';
 import { useState } from 'react';
 
-export default function Activity() {
+export default function Activity({ onShowGifts }: { onShowGifts?: () => void }) {
   const { userData } = useAuth();
 
   return (
@@ -66,7 +66,10 @@ export default function Activity() {
 
         {/* Large Feature Cards */}
         <div className="grid grid-cols-2 gap-4">
-          <div className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 active:scale-95 transition-transform">
+          <div 
+            onClick={onShowGifts}
+            className="bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100 active:scale-95 transition-transform cursor-pointer"
+          >
             <div className="h-28 bg-[#f56565] flex items-center justify-center relative">
                <Gift size={32} className="text-white relative z-10" />
             </div>
