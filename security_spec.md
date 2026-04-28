@@ -1,44 +1,31 @@
-# Firestore Security Specification
+# Security Specification
 
 ## Data Invariants
-1. Users can only access their own profile.
-2. Users can only manage their own bets and transactions.
-3. Game history is public for reading but requires authentication for writing (for demo hosting logic).
-4. Timestamp fields must be server-generated.
-5. PII (if any) must be protected.
+1. Users can only read and write their own profile data (except admins).
+2. Transactions are created by users with status 'pending' and can only be approved/rejected by admins.
+3. Users cannot modify the 'status' or 'amount' of a transaction once created.
+4. Bets are immutable once created, status is updated by the system/host logic.
+5. Gift codes are created by admins and claimed by users.
 
-## The Dirty Dozen Payloads
-We will test these payloads against our rules to ensure they are rejected.
+## The "Dirty Dozen" Payloads (Test Vectors)
+1. **Identity Spoofing**: Attempt to create a transaction with `userId` of another user.
+2. **Status Escalation**: Attempt to create a transaction with `status: 'success'`.
+3. **Wallet Injection**: User attempting to directly `update` their `wallet` field.
+4. **ID Poisoning**: Attempt to create a transaction with a 2MB string as ID.
+5. **PII Leak**: Non-admin attempting to list all `users`.
+6. **Double Claiming**: Claiming a gift code more than once.
+7. **Negative Bet**: Placing a bet with a negative amount.
+8. **Admin Impersonation**: Attempting to write to `gift_codes` as a normal user.
+9. **Result Forgery**: Attempting to write to `game_periods/history` as a normal user.
+10. **Shadow Field**: Adding a `role: 'admin'` to user profile during registration.
+11. **Timestamp Forgery**: Use a client timestamp for `createdAt` instead of `serverTimestamp()`.
+12. **Cross-User Withdrawal**: Requesting withdrawal to a number not bound to the user.
 
-1. **Identity Spoofing**: Attempt to create a user profile for someone else.
-   - `PUT /users/victim-id { "uid": "attacker-id", ... }` -> DENIED
-2. **Wallet Manipulation**: Attempt to increment own wallet balance directly.
-   - `UPDATE /users/my-id { "wallet": 999999 }` -> DENIED (should only be via transactions)
-3. **Ghost Field Injection**: Adding admin flags to profile.
-   - `UPDATE /users/my-id { "isAdmin": true }` -> DENIED
-4. **Orphaned Bet**: Creating a bet for a non-existent user.
-   - `CREATE /bets/bet-id { "userId": "non-existent", ... }` -> DENIED
-5. **Past Bet Creation**: Creating a bet for a period that has already ended.
-   - `CREATE /bets/bet-id { "timestamp": "2020-01-01...", ... }` -> DENIED
-6. **Result Tampering**: Overwriting a game result that already exists.
-   - `UPDATE /game_periods/30/history/old-period { "number": 7 }` -> DENIED
-7. **Resource Poisoning**: Injecting 1MB string as period ID.
-   - `CREATE /game_periods/30/history/[1MB-STRING]` -> DENIED
-8. **PII Leak**: Reading someone else's profile.
-   - `GET /users/victim-id` -> DENIED
-9. **History Wipe**: Deleting game history.
-   - `DELETE /game_periods/30/history/some-id` -> DENIED
-10. **Transaction Forgery**: Creating a 'success' deposit without approval.
-    - `CREATE /transactions/tx-id { "status": "success", ... }` -> DENIED
-11. **Negative Bet**: Betting a negative amount.
-    - `CREATE /bets/bet-id { "amount": -100 }` -> DENIED
-12. **Status Shortcutting**: Directly updating a bet to 'won'.
-    - `UPDATE /bets/bet-id { "status": "won" }` -> DENIED
-
-## Red Team Conflict Report (Anticipated)
-| Collection | Identity Spoofing | State Shortcutting | Resource Poisoning |
-|------------|-------------------|--------------------|--------------------|
-| users      | Blocked via UID   | N/A                | id.size() guard    |
-| game_hist  | Blocked via match | Immutable results  | isValidId() guard  |
-| bets       | Blocked via UID   | Status locking     | id.size() guard    |
-| txs        | Blocked via UID   | Status locking     | id.size() guard    |
+## The Test Runner (Plan)
+The tests will verify that ALL above malicious payloads return `PERMISSION_DENIED`.
+Rules will enforce:
+- `isOwner(userId)`
+- `isAdmin()`
+- `isValidTransaction()`
+- `isValidBet()`
+- `isValidGiftCode()`

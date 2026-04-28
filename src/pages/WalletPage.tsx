@@ -25,17 +25,18 @@ import toast from 'react-hot-toast';
 interface Transaction {
   id: string;
   userId: string;
-  type: 'deposit' | 'withdrawal';
+  type: 'deposit' | 'withdraw';
   amount: number;
   method: string;
-  account: string;
+  number?: string;
+  account?: string;
   txId: string;
   status: 'pending' | 'success' | 'rejected';
   timestamp: any;
 }
 
 type ViewState = 'wallet' | 'payment' | 'history';
-type WalletTab = 'deposit' | 'withdraw';
+type WalletTab = 'deposit' | 'withdraw' | 'history';
 
 // Sub-components moved outside to prevent re-creation on every render
 const BindModal = ({ 
@@ -167,11 +168,19 @@ const WalletView = ({
           >
             Withdraw
           </button>
+          <button 
+            onClick={() => setWalletTab('history')}
+            className={`flex-1 py-2.5 rounded-lg text-sm font-black transition-all ${
+              walletTab === 'history' ? 'bg-white text-[#f1c40f]' : 'text-white'
+            }`}
+          >
+            History
+          </button>
         </div>
       </div>
     </div>
 
-    {walletTab === 'deposit' ? (
+    {walletTab === 'deposit' && (
       <div className="text-left">
         <div className="px-4 mt-6">
           <div className="flex justify-between items-center mb-4">
@@ -180,7 +189,7 @@ const WalletView = ({
               <h3 className="text-sm font-black text-gray-800">Deposit Methods</h3>
             </div>
             <button 
-              onClick={() => setView('history')}
+              onClick={() => setWalletTab('history')}
               className="flex items-center space-x-1 text-gray-400 text-[10px] font-bold"
             >
               <History size={14} />
@@ -278,7 +287,9 @@ const WalletView = ({
           </button>
         </div>
       </div>
-    ) : (
+    )}
+
+    {walletTab === 'withdraw' && (
       <div className="text-left">
         <div className="px-4 mt-6">
           <div className="flex justify-between items-center mb-4">
@@ -287,7 +298,7 @@ const WalletView = ({
               <h3 className="text-sm font-black text-gray-800">Withdraw Info</h3>
             </div>
             <button 
-              onClick={() => setView('history')}
+              onClick={() => setWalletTab('history')}
               className="flex items-center space-x-1 text-gray-400 text-[10px] font-bold"
             >
               <History size={14} />
@@ -368,6 +379,52 @@ const WalletView = ({
            </button>
         </div>
       </div>
+    )}
+
+    {walletTab === 'history' && (
+       <div className="p-4 space-y-4 text-left">
+          {userData?.transactions?.length === 0 ? (
+            <div className="py-20 flex flex-col items-center text-gray-300 space-y-4">
+               <History size={64} strokeWidth={1} />
+               <p className="text-sm font-bold">No transactions yet</p>
+            </div>
+          ) : (
+            transactions.map((tx: any) => (
+              <div key={tx.id} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
+                 <div className="flex justify-between items-start">
+                    <div className="flex items-center space-x-3">
+                       <div className={`w-10 h-10 rounded-2xl flex items-center justify-center ${
+                         tx.type === 'deposit' ? 'bg-green-50 text-green-500' : 'bg-blue-50 text-blue-500'
+                       }`}>
+                          {tx.type === 'deposit' ? <CheckCircle2 size={24} /> : <AlertCircle size={24} />}
+                       </div>
+                       <div className="text-left">
+                          <p className="text-sm font-black text-gray-800 capitalize">{tx.type} via {tx.method}</p>
+                          <p className="text-[10px] font-bold text-gray-400">
+                             {tx.timestamp?.toDate().toLocaleString() || 'Processing...'}
+                          </p>
+                       </div>
+                    </div>
+                    <div className="text-right">
+                       <p className="text-lg font-black text-gray-800">৳{tx.amount.toFixed(2)}</p>
+                        <span className={`text-[10px] font-extrabold uppercase px-3 py-1 rounded-full ${
+                          tx.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                          tx.status === 'success' ? 'bg-green-100 text-green-700' :
+                          'bg-red-100 text-red-700'
+                        }`}>
+                           {tx.status === 'pending' ? 'Pending' : 
+                            tx.status === 'success' ? 'Completed' : 'Cancelled'}
+                        </span>
+                    </div>
+                 </div>
+                 <div className="pt-3 border-t border-gray-50 flex justify-between items-center text-[10px] font-bold">
+                    <span className="text-gray-400 uppercase tracking-widest">TRANSACTION ID</span>
+                    <span className="text-gray-800 font-mono tracking-tighter">{tx.txId}</span>
+                 </div>
+              </div>
+            ))
+          )}
+       </div>
     )}
   </div>
 );
@@ -645,7 +702,8 @@ export default function WalletPage({ initialTab = 'deposit', initialView = 'wall
       });
 
       toast.success('Withdrawal request submitted!');
-      setView('history');
+      setWalletTab('history');
+      setView('wallet');
       setWithdrawAmount('');
       setLoginPassword('');
     } catch (error) {
@@ -673,7 +731,8 @@ export default function WalletPage({ initialTab = 'deposit', initialView = 'wall
         timestamp: serverTimestamp()
       });
       toast.success('Submitted successfully!');
-      setView('history');
+      setWalletTab('history');
+      setView('wallet');
       setTxnId('');
       setAmount('');
     } catch (error) {

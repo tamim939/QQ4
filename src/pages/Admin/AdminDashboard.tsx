@@ -414,6 +414,48 @@ function GiftsManage() {
             {isGenerating ? 'GENERATING...' : 'GENERATE GIFT CODE'}
           </button>
        </div>
+
+       <div className="w-full mt-12 space-y-4">
+          <h4 className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em] mb-6">Recent Codes</h4>
+          <GiftCodeList />
+       </div>
+    </div>
+  );
+}
+
+function GiftCodeList() {
+  const [codes, setCodes] = useState<any[]>([]);
+
+  useEffect(() => {
+    const q = query(
+      collection(db, 'gift_codes'),
+      orderBy('createdAt', 'desc'),
+      limit(20)
+    );
+    return onSnapshot(q, (snapshot) => {
+      setCodes(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+    });
+  }, []);
+
+  return (
+    <div className="space-y-3">
+       {codes.map(c => (
+         <div key={c.id} className="bg-gray-50 rounded-2xl p-4 flex items-center justify-between">
+            <div className="text-left leading-none">
+               <p className="text-sm font-black text-gray-800 font-mono tracking-wider">{c.code}</p>
+               <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-1">৳{c.amount} • {c.currentClaims}/{c.maxClaims} Used</p>
+            </div>
+            <button 
+              onClick={() => {
+                navigator.clipboard.writeText(c.code);
+                toast.success('Code copied!');
+              }}
+              className="p-2 text-gray-400 hover:text-[#f1c40f] active:scale-90"
+            >
+               <Copy size={16} />
+            </button>
+         </div>
+       ))}
     </div>
   );
 }

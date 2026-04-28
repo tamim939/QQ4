@@ -1,70 +1,70 @@
 {
   "entities": {
     "User": {
-      "title": "User Profile",
-      "description": "User account details, wallet balance, and rebate information.",
+      "title": "User",
+      "description": "User profile and wallet data",
       "type": "object",
       "properties": {
-        "uid": { "type": "string" },
-        "userNumericId": { "type": "string" },
-        "mobile": { "type": "string" },
         "displayName": { "type": "string" },
+        "mobile": { "type": "string" },
         "avatar": { "type": "string" },
         "wallet": { "type": "number" },
-        "referCode": { "type": "string" },
-        "totalWager": { "type": "number" },
-        "claimedRebate": { "type": "number" },
-        "hasDeposited": { "type": "boolean" },
-        "hideDepositBonus": { "type": "boolean" },
-        "lastBonusClaimDate": { "type": "string", "format": "date" }
+        "userNumericId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "boundWallet": {
+          "type": "object",
+          "properties": {
+            "method": { "type": "string" },
+            "number": { "type": "string" }
+          }
+        }
       },
-      "required": ["uid", "mobile", "wallet", "userNumericId"]
-    },
-    "GamePeriod": {
-      "title": "Game Period",
-      "description": "Information about a specific lottery round.",
-      "type": "object",
-      "properties": {
-        "duration": { "type": "integer", "enum": [30, 60, 180] },
-        "periodId": { "type": "string" },
-        "number": { "type": "integer" },
-        "color": { "type": "string", "enum": ["Red", "Green", "Violet"] },
-        "size": { "type": "string", "enum": ["Big", "Small"] },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
-    },
-    "Bet": {
-      "title": "User Bet",
-      "description": "A bet placed by a user for a specific period.",
-      "type": "object",
-      "properties": {
-        "userId": { "type": "string" },
-        "periodId": { "type": "string" },
-        "duration": { "type": "integer" },
-        "type": { "type": "string", "enum": ["color", "number", "size"] },
-        "value": { "type": "string" },
-        "amount": { "type": "number" },
-        "multiplier": { "type": "integer" },
-        "quantity": { "type": "integer" },
-        "status": { "type": "string", "enum": ["pending", "won", "lost"] },
-        "payout": { "type": "number" },
-        "timestamp": { "type": "string", "format": "date-time" }
-      }
+      "required": ["displayName", "mobile", "wallet"]
     },
     "Transaction": {
-      "title": "Transaction History",
-      "description": "Record of a deposit or withdrawal.",
+      "title": "Transaction",
+      "description": "Deposit and withdrawal records",
       "type": "object",
       "properties": {
         "userId": { "type": "string" },
-        "type": { "type": "string", "enum": ["deposit", "withdrawal"] },
+        "type": { "type": "string", "enum": ["deposit", "withdraw"] },
         "amount": { "type": "number" },
         "method": { "type": "string" },
-        "account": { "type": "string" },
         "txId": { "type": "string" },
         "status": { "type": "string", "enum": ["pending", "success", "rejected"] },
+        "timestamp": { "type": "string", "format": "date-time" },
+        "number": { "type": "string", "description": "For withdrawals" },
+        "account": { "type": "string", "description": "Target account for deposits" }
+      },
+      "required": ["userId", "type", "amount", "status"]
+    },
+    "Bet": {
+      "title": "Bet",
+      "description": "Gaming bets",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["color", "size", "number"] },
+        "value": { "type": "string" },
+        "amount": { "type": "number" },
+        "duration": { "type": "number" },
+        "periodId": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "win", "lose"] },
         "timestamp": { "type": "string", "format": "date-time" }
       }
+    },
+    "GiftCode": {
+       "title": "Gift Code",
+       "description": "Gift codes for bonuses",
+       "type": "object",
+       "properties": {
+          "code": { "type": "string" },
+          "amount": { "type": "number" },
+          "maxClaims": { "type": "number" },
+          "currentClaims": { "type": "number" },
+          "status": { "type": "string" },
+          "createdAt": { "type": "string", "format": "date-time" }
+       }
     }
   },
   "firestore": {
@@ -72,17 +72,21 @@
       "schema": "User",
       "description": "User profiles"
     },
-    "game_periods/{duration}/history/{periodId}": {
-      "schema": "GamePeriod",
-      "description": "History of lottery results"
+    "transactions/{txnId}": {
+      "schema": "Transaction",
+      "description": "Payment records"
     },
     "bets/{betId}": {
       "schema": "Bet",
       "description": "User bets"
     },
-    "transactions/{txId}": {
-      "schema": "Transaction",
-      "description": "Financial records"
+    "gift_codes/{codeId}": {
+       "schema": "GiftCode",
+       "description": "Gift codes"
+    },
+    "game_periods/{duration}/history/{periodId}": {
+       "schema": "object",
+       "description": "Game results"
     }
   }
 }
