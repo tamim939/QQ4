@@ -1,6 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { collection, query, orderBy, limit, onSnapshot, doc, setDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db } from '../lib/firebase';
+import { handleFirestoreError, OperationType } from '../lib/utils';
+
 
 interface GameResult {
   periodId: string;

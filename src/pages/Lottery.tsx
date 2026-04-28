@@ -4,7 +4,9 @@ import { ChevronLeft, RefreshCw, Volume2, Gamepad2, Info, Headphones } from 'luc
 import { useAuth } from '../context/AuthContext';
 import { useGame } from '../context/GameContext';
 import { addDoc, collection, serverTimestamp, doc, updateDoc, increment } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db } from '../lib/firebase';
+import { handleFirestoreError, OperationType } from '../lib/utils';
+
 import BetModal from '../components/Games/BetModal';
 
 interface LotteryProps {

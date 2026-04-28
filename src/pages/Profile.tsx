@@ -25,7 +25,9 @@ import { useAuth } from '../context/AuthContext';
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { doc, updateDoc } from 'firebase/firestore';
-import { db, handleFirestoreError, OperationType } from '../lib/firebase';
+import { db } from '../lib/firebase';
+import { handleFirestoreError, OperationType } from '../lib/utils';
+
 
 export default function Profile() {
   const { userData } = useAuth();
