@@ -15,6 +15,10 @@ interface UserData {
   hideDepositBonus: boolean;
   lastBonusClaimDate: string | null;
   referCode: string;
+  boundWallet?: {
+    method: 'Nagad' | 'BKASH';
+    number: string;
+  };
 }
 
 const AVATARS = [

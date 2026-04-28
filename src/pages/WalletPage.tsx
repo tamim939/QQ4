@@ -9,17 +9,20 @@ import {
   Clock,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Wallet,
+  Trophy
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
+import { doc, updateDoc, collection, addDoc, query, where, orderBy, onSnapshot, serverTimestamp } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/utils';
 import toast from 'react-hot-toast';
 
 type ViewState = 'wallet' | 'payment' | 'history';
+type WalletTab = 'deposit' | 'withdraw';
 
 interface Transaction {
   id: string;
@@ -43,6 +46,13 @@ export default function WalletPage() {
   const [txnId, setTxnId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [walletTab, setWalletTab] = useState<WalletTab>('deposit');
+  const [isBindModalOpen, setIsBindModalOpen] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [tempBindMethod, setTempBindMethod] = useState<'Nagad' | 'BKASH'>('BKASH');
+  const [tempBindNumber, setTempBindNumber] = useState('');
+  const [isBinding, setIsBinding] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -125,8 +135,104 @@ export default function WalletPage() {
     }
   };
 
+  const handleBindWallet = async () => {
+    if (!tempBindNumber || tempBindNumber.length < 11) {
+      toast.error('Please enter valid number');
+      return;
+    }
+    if (!user) return;
+
+    setIsBinding(true);
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        boundWallet: {
+          method: tempBindMethod,
+          number: tempBindNumber
+        }
+      });
+      toast.success('Wallet binded successfully');
+      setIsBindModalOpen(false);
+    } catch (error) {
+      handleFirestoreError(error, OperationType.UPDATE, `users/${user.uid}`);
+    } finally {
+      setIsBinding(false);
+    }
+  };
+
+  const BindModal = () => (
+    <div className="fixed inset-0 bg-black/60 z-[100] flex items-center justify-center p-6">
+      <motion.div 
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        className="bg-white w-full max-w-sm rounded-[32px] overflow-hidden shadow-2xl p-6"
+      >
+        <h3 className="text-xl font-black text-center text-gray-800 mb-8 tracking-widest uppercase">BIND WALLET</h3>
+        
+        <div className="flex space-x-4 mb-8">
+          <button 
+            onClick={() => setTempBindMethod('BKASH')}
+            className={`flex-1 aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 transition-all relative ${
+              tempBindMethod === 'BKASH' ? 'border-[#f1c40f] bg-[#f1c40f]/5' : 'border-gray-100'
+            }`}
+          >
+            <img src="https://seeklogo.com/images/B/bkash-logo-835789094A-seeklogo.com.png" className="w-12 h-12 object-contain mb-2" alt="bkash" />
+            <span className="text-[10px] font-black uppercase text-gray-400">BKASH</span>
+            {tempBindMethod === 'BKASH' && (
+              <div className="absolute top-2 right-2 text-[#f1c40f]">
+                <Check size={16} strokeWidth={4} />
+              </div>
+            )}
+          </button>
+          <button 
+            onClick={() => setTempBindMethod('Nagad')}
+            className={`flex-1 aspect-square rounded-3xl border-2 flex flex-col items-center justify-center p-4 transition-all relative ${
+              tempBindMethod === 'Nagad' ? 'border-[#f1c40f] bg-[#f1c40f]/5' : 'border-gray-100'
+            }`}
+          >
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1024px-Nagad_Logo.svg.png" className="w-12 h-12 object-contain mb-2" alt="nagad" />
+            <span className="text-[10px] font-black uppercase text-gray-400">NAGAD</span>
+            {tempBindMethod === 'Nagad' && (
+              <div className="absolute top-2 right-2 text-[#f1c40f]">
+                <Check size={16} strokeWidth={4} />
+              </div>
+            )}
+          </button>
+        </div>
+
+        <div className="space-y-4">
+           <div>
+              <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-2 block">WALLET NUMBER</label>
+              <input 
+                type="text" 
+                placeholder="017xxxxxxxx"
+                value={tempBindNumber}
+                onChange={(e) => setTempBindNumber(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-4 px-6 font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all"
+              />
+           </div>
+
+           <div className="flex space-x-4 pt-4">
+              <button 
+                onClick={() => setIsBindModalOpen(false)}
+                className="flex-1 bg-gray-100 text-gray-500 py-4 rounded-[20px] font-black uppercase text-sm"
+              >
+                CANCEL
+              </button>
+              <button 
+                onClick={handleBindWallet}
+                disabled={isBinding}
+                className="flex-1 bg-[#f1c40f] text-white py-4 rounded-[20px] font-black uppercase text-sm shadow-xl shadow-[#f1c40f]/20"
+              >
+                {isBinding ? '...' : 'SAVE'}
+              </button>
+           </div>
+        </div>
+      </motion.div>
+    </div>
+  );
+
   const WalletView = () => (
-    <div className="pb-28">
+    <div className="pb-28 min-h-[calc(100vh-60px)] flex flex-col">
       {/* Page Title */}
       <div className="bg-white py-4 text-center">
          <h2 className="text-lg font-bold text-gray-800 tracking-tight">Wallet</h2>
@@ -138,125 +244,236 @@ export default function WalletPage() {
           <p className="text-[10px] font-medium opacity-90 mb-2">Total balance</p>
           <p className="text-4xl font-black mb-10 tracking-tight">৳ {walletBalance.toFixed(2)}</p>
           
-          <div className="flex space-x-4">
-            <button className="flex-1 bg-white text-[#f1c40f] py-3 rounded-xl text-sm font-black shadow-md">
+          <div className="flex bg-black/10 p-1 rounded-xl">
+            <button 
+              onClick={() => setWalletTab('deposit')}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-black transition-all ${
+                walletTab === 'deposit' ? 'bg-white text-[#f1c40f]' : 'text-white'
+              }`}
+            >
               Deposit
             </button>
-            <button className="flex-1 bg-white/30 text-white py-3 rounded-xl text-sm font-black">
+            <button 
+              onClick={() => setWalletTab('withdraw')}
+              className={`flex-1 py-2.5 rounded-lg text-sm font-black transition-all ${
+                walletTab === 'withdraw' ? 'bg-white text-[#f1c40f]' : 'text-white'
+              }`}
+            >
               Withdraw
             </button>
           </div>
         </div>
       </div>
 
-      {/* Deposit Methods Section */}
-      <div className="px-4 mt-6">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center space-x-2">
-            <div className="w-1.5 h-4 bg-[#f1c40f] rounded-full" />
-            <h3 className="text-sm font-black text-gray-800">Deposit Methods</h3>
-          </div>
-          <button 
-            onClick={() => setView('history')}
-            className="flex items-center space-x-1 text-gray-400 text-[10px] font-bold"
-          >
-            <History size={14} />
-            <span>History</span>
-          </button>
-        </div>
-
-        <div className="grid grid-cols-2 gap-4">
-          {methods.map((m) => (
-            <div 
-              key={m.id}
-              onClick={() => setSelectedMethod(m.id as any)}
-              className={`p-4 bg-white rounded-2xl flex flex-col items-center space-y-2 border-2 transition-all relative ${
-                selectedMethod === m.id ? 'border-[#f1c40f]' : 'border-gray-100'
-              }`}
-            >
-              <div className="w-12 h-12 flex items-center justify-center p-2">
-                <img src={m.icon} alt={m.name} className="max-w-full max-h-full object-contain" />
+      {walletTab === 'deposit' ? (
+        <>
+          {/* Deposit Methods Section */}
+          <div className="px-4 mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-1.5 h-4 bg-[#f1c40f] rounded-full" />
+                <h3 className="text-sm font-black text-gray-800">Deposit Methods</h3>
               </div>
-              <p className="text-xs font-bold text-gray-700">{m.name}</p>
-              {selectedMethod === m.id && (
-                <div className="absolute top-2 right-2 text-[#f1c40f]">
-                  <Check size={16} strokeWidth={4} />
-                </div>
-              )}
+              <button 
+                onClick={() => setView('history')}
+                className="flex items-center space-x-1 text-gray-400 text-[10px] font-bold"
+              >
+                <History size={14} />
+                <span>History</span>
+              </button>
             </div>
-          ))}
-        </div>
-      </div>
 
-      {/* Select Channel Section */}
-      <div className="px-4 mt-8">
-        <p className="text-xs font-bold text-gray-500 mb-4">Select Channel</p>
-        <div className="grid grid-cols-2 gap-3">
-          {channels.map((c) => (
+            <div className="grid grid-cols-2 gap-4">
+              {methods.map((m) => (
+                <div 
+                  key={m.id}
+                  onClick={() => setSelectedMethod(m.id as any)}
+                  className={`p-4 bg-white rounded-2xl flex flex-col items-center space-y-2 border-2 transition-all relative ${
+                    selectedMethod === m.id ? 'border-[#f1c40f]' : 'border-gray-100'
+                  }`}
+                >
+                  <div className="w-12 h-12 flex items-center justify-center p-2">
+                    <img src={m.icon} alt={m.name} className="max-w-full max-h-full object-contain" />
+                  </div>
+                  <p className="text-xs font-bold text-gray-700">{m.name}</p>
+                  {selectedMethod === m.id && (
+                    <div className="absolute top-2 right-2 text-[#f1c40f]">
+                      <Check size={16} strokeWidth={4} />
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Select Channel Section */}
+          <div className="px-4 mt-8">
+            <p className="text-xs font-bold text-gray-500 mb-4">Select Channel</p>
+            <div className="grid grid-cols-2 gap-3">
+              {channels.map((c) => (
+                <button 
+                  key={c}
+                  onClick={() => setSelectedChannel(c)}
+                  className={`py-3 rounded-xl text-[10px] font-bold border transition-all ${
+                    selectedChannel === c 
+                      ? 'bg-[#f1c40f]/5 border-[#f1c40f] text-[#f1c40f]' 
+                      : 'bg-gray-50 border-gray-100 text-gray-500'
+                  }`}
+                >
+                  {c}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Deposit Amount Section */}
+          <div className="px-4 mt-8">
+            <p className="text-xs font-bold text-gray-500 mb-4">Deposit Amount</p>
+            <div className="grid grid-cols-3 gap-3">
+              {amounts.map((a) => {
+                 const actualVal = a.includes('K') ? parseInt(a.replace('K', '')) * 1000 : parseInt(a);
+                 return (
+                   <button 
+                     key={a}
+                     onClick={() => setAmount(actualVal.toString())}
+                     className={`py-4 rounded-xl text-xs font-bold border transition-all ${
+                       amount === actualVal.toString()
+                         ? 'bg-[#f1c40f]/5 border-[#f1c40f] text-[#f1c40f]' 
+                         : 'bg-gray-50 border-gray-100 text-gray-400'
+                     }`}
+                   >
+                     ৳ {a}
+                   </button>
+                 );
+              })}
+            </div>
+
+            {/* Custom Input */}
+            <div className="mt-4 relative">
+              <div className="absolute left-5 top-1/2 -translate-y-1/2 text-xl font-bold text-[#f1c40f]">৳</div>
+              <input 
+                type="text"
+                value={amount}
+                onChange={(e) => setAmount(e.target.value)}
+                className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 pl-12 pr-12 text-lg font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all"
+              />
+              <button 
+                onClick={() => setAmount('')}
+                className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-white"
+              >
+                <X size={14} strokeWidth={3} />
+              </button>
+            </div>
+          </div>
+
+          {/* Main Action Button */}
+          <div className="px-4 mt-10">
             <button 
-              key={c}
-              onClick={() => setSelectedChannel(c)}
-              className={`py-3 rounded-xl text-[10px] font-bold border transition-all ${
-                selectedChannel === c 
-                  ? 'bg-[#f1c40f]/5 border-[#f1c40f] text-[#f1c40f]' 
-                  : 'bg-gray-50 border-gray-100 text-gray-500'
-              }`}
+              onClick={() => setView('payment')}
+              className="w-full bg-[#f1c40f] text-white py-5 rounded-[24px] font-black text-lg shadow-xl shadow-[#f1c40f]/20 active:scale-95 transition-all"
             >
-              {c}
+              Deposit
             </button>
-          ))}
-        </div>
-      </div>
+          </div>
+        </>
+      ) : (
+        <>
+          {/* Withdraw Section */}
+          <div className="px-4 mt-6">
+            <div className="flex justify-between items-center mb-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-1.5 h-4 bg-[#f1c40f] rounded-full" />
+                <h3 className="text-sm font-black text-gray-800">Withdraw Info</h3>
+              </div>
+              <button 
+                onClick={() => setView('history')}
+                className="flex items-center space-x-1 text-gray-400 text-[10px] font-bold"
+              >
+                <History size={14} />
+                <span>History</span>
+              </button>
+            </div>
 
-      {/* Deposit Amount Section */}
-      <div className="px-4 mt-8">
-        <p className="text-xs font-bold text-gray-500 mb-4">Deposit Amount</p>
-        <div className="grid grid-cols-3 gap-3">
-          {amounts.map((a) => {
-             const actualVal = a.includes('K') ? parseInt(a.replace('K', '')) * 1000 : parseInt(a);
-             return (
-               <button 
-                 key={a}
-                 onClick={() => setAmount(actualVal.toString())}
-                 className={`py-4 rounded-xl text-xs font-bold border transition-all ${
-                   amount === actualVal.toString()
-                     ? 'bg-[#f1c40f]/5 border-[#f1c40f] text-[#f1c40f]' 
-                     : 'bg-gray-50 border-gray-100 text-gray-400'
-                 }`}
-               >
-                 ৳ {a}
-               </button>
-             );
-          })}
-        </div>
+            {/* Select Wallet / Bind Button */}
+            <button 
+              onClick={() => setIsBindModalOpen(true)}
+              className="w-full bg-white rounded-3xl p-6 shadow-sm border border-gray-100 flex items-center justify-between active:scale-98 transition-all"
+            >
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-[#f1c40f]/10 rounded-2xl flex items-center justify-center text-[#f1c40f]">
+                  <Wallet size={24} />
+                </div>
+                <div className="text-left">
+                  <p className="text-sm font-black text-gray-800">
+                    {userData?.boundWallet ? `${userData.boundWallet.method} - ${userData.boundWallet.number}` : 'Select Wallet'}
+                  </p>
+                  <p className="text-[10px] font-bold text-gray-400">
+                    {userData?.boundWallet ? 'Tap to change account' : 'Tap to bind account'}
+                  </p>
+                </div>
+              </div>
+              <ChevronRight size={20} className="text-gray-300" />
+            </button>
+          </div>
 
-        {/* Custom Input */}
-        <div className="mt-4 relative">
-          <div className="absolute left-5 top-1/2 -translate-y-1/2 text-xl font-bold text-[#f1c40f]">৳</div>
-          <input 
-            type="text"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 pl-12 pr-12 text-lg font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all"
-          />
-          <button 
-            onClick={() => setAmount('')}
-            className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6 bg-gray-200 rounded-full flex items-center justify-center text-white"
-          >
-            <X size={14} strokeWidth={3} />
-          </button>
-        </div>
-      </div>
+          {/* Wager Requirement Section */}
+          <div className="px-4 mt-8">
+             <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div className="flex justify-between items-center mb-4">
+                   <p className="text-[10px] font-black text-gray-400 uppercase tracking-wider">Wager Requirement</p>
+                   <span className="text-[10px] font-black text-rose-500 uppercase">Pending</span>
+                </div>
+                
+                <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden mb-3">
+                   <motion.div 
+                    initial={{ width: 0 }}
+                    animate={{ width: '40%' }}
+                    className="h-full bg-rose-500" 
+                   />
+                </div>
+                
+                <p className="text-[10px] font-bold text-gray-400">Needed: <span className="text-gray-800 font-black">৳120.00</span></p>
+             </div>
+          </div>
 
-      {/* Main Action Button */}
-      <div className="px-4 mt-10">
-        <button 
-          onClick={() => setView('payment')}
-          className="w-full bg-[#f1c40f] text-white py-5 rounded-[24px] font-black text-lg shadow-xl shadow-[#f1c40f]/20 active:scale-95 transition-all"
-        >
-          Deposit
-        </button>
-      </div>
+          {/* Withdraw Amount Section */}
+          <div className="px-4 mt-8 space-y-4">
+             <div className="relative">
+                <div className="absolute left-6 top-1/2 -translate-y-1/2 text-[#f1c40f] font-black text-lg">৳</div>
+                <input 
+                  type="text"
+                  placeholder="Withdraw Amount (Min 500)"
+                  value={withdrawAmount}
+                  onChange={(e) => setWithdrawAmount(e.target.value)}
+                  className="w-full bg-white border border-gray-100 rounded-2xl py-5 pl-12 pr-6 font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all shadow-sm"
+                />
+             </div>
+
+             <div className="relative">
+                <input 
+                  type="password"
+                  placeholder="Login Password"
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                  className="w-full bg-white border border-gray-100 rounded-2xl py-5 px-6 font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all shadow-sm"
+                />
+             </div>
+
+             <button 
+               className="w-full bg-[#f1c40f] text-white py-5 rounded-[24px] font-black text-lg shadow-xl shadow-[#f1c40f]/20 active:scale-95 transition-all mt-4"
+               onClick={() => {
+                 if (!userData?.boundWallet) {
+                   toast.error('Please bind your wallet first');
+                   return;
+                 }
+                 toast.error('Withdrawals are currently disabled for your account level');
+               }}
+             >
+               Withdraw
+             </button>
+          </div>
+        </>
+      )}
     </div>
   );
 
@@ -490,6 +707,15 @@ export default function WalletPage() {
       <AnimatePresence>
         {view === 'payment' && <PaymentView />}
       </AnimatePresence>
+
+      <AnimatePresence>
+        {isBindModalOpen && <BindModal />}
+      </AnimatePresence>
+
+      {/* Floating Customer Support */}
+      <button className="fixed right-6 bottom-24 w-14 h-14 bg-[#f1c40f] rounded-full flex items-center justify-center text-white shadow-2xl z-40 border-4 border-white active:scale-90 transition-all">
+        <Headphones size={28} strokeWidth={2.5} />
+      </button>
     </div>
   );
 }
