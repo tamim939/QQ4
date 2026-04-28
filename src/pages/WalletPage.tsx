@@ -123,9 +123,10 @@ export default function WalletPage() {
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
-        setView('wallet');
+        setView('history');
         setTxnId('');
-      }, 2500);
+        setAmount('');
+      }, 2000);
       
     } catch (error) {
       toast.error('Failed to submit deposit');
