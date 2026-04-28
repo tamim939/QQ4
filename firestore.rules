@@ -75,6 +75,24 @@ service cloud.firestore {
     }
 
     // -------------------------------------------------------------------------
+    // GIFT CODES & CLAIMS
+    // -------------------------------------------------------------------------
+    match /gift_codes/{codeId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+      
+      match /claims/{claimUserId} {
+        allow read: if isSignedIn() && (isOwner(claimUserId) || isAdmin());
+        allow create: if isSignedIn() && isOwner(claimUserId);
+      }
+    }
+
+    match /users/{userId}/gift_claims/{claimId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow create: if isSignedIn() && isOwner(userId);
+    }
+
+    // -------------------------------------------------------------------------
     // GAME HISTORY (Renamed duration to gameDuration to avoid reserved keyword)
     // -------------------------------------------------------------------------
     match /game_periods/{gameDuration}/history/{periodId} {

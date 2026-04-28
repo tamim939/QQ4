@@ -84,6 +84,10 @@
        "schema": "GiftCode",
        "description": "Gift codes"
     },
+    "gift_codes/{codeId}/claims/{userId}": {
+       "schema": "object",
+       "description": "User claims for a gift code"
+    },
     "game_periods/{duration}/history/{periodId}": {
        "schema": "object",
        "description": "Game results"

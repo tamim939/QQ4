@@ -6,6 +6,7 @@ import Profile from './pages/Profile';
 import Mines from './pages/Mines';
 import Promotion from './pages/Promotion';
 import WalletPage from './pages/WalletPage';
+import Gifts from './pages/Gifts';
 import AdminDashboard from './pages/Admin/AdminDashboard';
 import BottomNav from './components/Layout/BottomNav';
 import { useState, useEffect } from 'react';
@@ -18,6 +19,7 @@ type ViewState = 'wallet' | 'payment' | 'history';
 function MainApp() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('lottery');
+  const [showGifts, setShowGifts] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
   const [initialWalletTab, setInitialWalletTab] = useState<'deposit' | 'withdraw'>('deposit');
   const [initialView, setInitialView] = useState<ViewState>('wallet');
@@ -51,6 +53,10 @@ function MainApp() {
     return <AdminDashboard onBack={() => setShowAdmin(false)} />;
   }
 
+  if (showGifts) {
+    return <Gifts onBack={() => setShowGifts(false)} />;
+  }
+
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <main className="flex-1 overflow-y-auto no-scrollbar">
@@ -58,7 +64,7 @@ function MainApp() {
         {activeTab === 'mines' && <Mines onBack={() => setActiveTab('lottery')} />}
         {activeTab === 'promotion' && <Promotion />}
         {activeTab === 'wallet' && <WalletPage initialTab={initialWalletTab} initialView={initialView} />}
-        {activeTab === 'account' && <Profile onNavigateToWallet={navigateToWallet} onShowGifts={() => {}} onShowAdmin={() => setShowAdmin(true)} />}
+        {activeTab === 'account' && <Profile onNavigateToWallet={navigateToWallet} onShowGifts={() => setShowGifts(true)} onShowAdmin={() => setShowAdmin(true)} />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={(tab) => setActiveTab(tab)} />
     </div>
