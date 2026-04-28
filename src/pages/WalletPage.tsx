@@ -255,6 +255,7 @@ const WalletView = ({
             <div className="absolute left-5 top-1/2 -translate-y-1/2 text-xl font-bold text-[#f1c40f]">৳</div>
             <input 
               type="tel"
+              inputMode="numeric"
               value={amount}
               onChange={(e) => setAmount(e.target.value)}
               className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 pl-12 pr-12 text-lg font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all"
@@ -500,6 +501,7 @@ const PaymentView = ({
             <input 
               type="text"
               placeholder="Enter 10-digit ID"
+              autoComplete="off"
               value={txnId}
               onChange={(e) => setTxnId(e.target.value)}
               className="w-full bg-gray-50 border border-gray-100 rounded-2xl py-5 px-6 font-black text-gray-800 outline-none focus:border-[#f1c40f] transition-all"
@@ -545,9 +547,9 @@ const PaymentView = ({
   </div>
 );
 
-export default function WalletPage() {
+export default function WalletPage({ initialTab = 'deposit', initialView = 'wallet' }: { initialTab?: WalletTab, initialView?: ViewState }) {
   const { userData, user } = useAuth();
-  const [view, setView] = useState<ViewState>('wallet');
+  const [view, setView] = useState<ViewState>(initialView);
   const [success, setSuccess] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'nagad' | 'bkash'>('bkash');
   const [selectedChannel, setSelectedChannel] = useState('CashPay-bKash');
@@ -555,18 +557,12 @@ export default function WalletPage() {
   const [txnId, setTxnId] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [walletTab, setWalletTab] = useState<WalletTab>(
-    window.location.hash === '#withdraw' ? 'withdraw' : 'deposit'
-  );
+  const [walletTab, setWalletTab] = useState<WalletTab>(initialTab);
 
   useEffect(() => {
-    const handleHashChange = () => {
-      if (window.location.hash === '#withdraw') setWalletTab('withdraw');
-      if (window.location.hash === '#deposit') setWalletTab('deposit');
-    };
-    window.addEventListener('hashchange', handleHashChange);
-    return () => window.removeEventListener('hashchange', handleHashChange);
-  }, []);
+    setWalletTab(initialTab);
+    setView(initialView);
+  }, [initialTab, initialView]);
 
   const [isBindModalOpen, setIsBindModalOpen] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState('');

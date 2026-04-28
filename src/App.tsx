@@ -14,11 +14,21 @@ import { AnimatePresence, motion } from 'motion/react';
 
 import SplashScreen from './components/Common/SplashScreen';
 
+type ViewState = 'wallet' | 'payment' | 'history';
+
 function MainApp() {
   const { user, loading } = useAuth();
   const [activeTab, setActiveTab] = useState('home');
   const [activeGame, setActiveGame] = useState<string | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [initialWalletTab, setInitialWalletTab] = useState<'deposit' | 'withdraw'>('deposit');
+  const [initialView, setInitialView] = useState<ViewState>('wallet');
+
+  const navigateToWallet = (tab: 'deposit' | 'withdraw' = 'deposit', view: ViewState = 'wallet') => {
+    setInitialWalletTab(tab);
+    setInitialView(view);
+    setActiveTab('wallet');
+  };
 
   // Initial splash effect
   useEffect(() => {
@@ -69,8 +79,8 @@ function MainApp() {
         {activeTab === 'home' && <Home onSelectGame={(id) => setActiveGame(id)} />}
         {activeTab === 'activity' && <Activity />}
         {activeTab === 'promotion' && <Promotion />}
-        {activeTab === 'wallet' && <WalletPage />}
-        {activeTab === 'account' && <Profile />}
+        {activeTab === 'wallet' && <WalletPage initialTab={initialWalletTab} initialView={initialView} />}
+        {activeTab === 'account' && <Profile onNavigateToWallet={navigateToWallet} />}
       </main>
       <BottomNav activeTab={activeTab} onTabChange={(tab) => setActiveTab(tab)} />
     </div>

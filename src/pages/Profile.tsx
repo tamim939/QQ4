@@ -31,7 +31,7 @@ import { handleFirestoreError, OperationType } from '../lib/utils';
 
 import toast from 'react-hot-toast';
 
-export default function Profile() {
+export default function Profile({ onNavigateToWallet }: { onNavigateToWallet?: (tab: 'deposit' | 'withdraw', view?: 'wallet' | 'payment' | 'history') => void }) {
   const { userData } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState(false);
@@ -56,7 +56,7 @@ export default function Profile() {
     <div className="min-h-screen bg-[#f1f2f6] pb-24 text-left font-sans">
       {/* Top Utility Bar */}
       <div className="bg-white px-4 py-3 flex items-center justify-between border-b border-gray-50">
-        <h1 className="text-2xl font-black italic text-[#f1c40f] tracking-tighter uppercase">QQ4</h1>
+        <h1 className="text-2xl font-black italic text-[#f1c40f] tracking-tighter uppercase">MK WIN 25</h1>
         <div className="flex items-center space-x-4 text-gray-400">
            <Download size={22} className="stroke-[2.5]" />
            <Headphones size={22} className="stroke-[2.5]" />
@@ -129,9 +129,9 @@ export default function Profile() {
           </div>
 
           <div className="grid grid-cols-4 gap-2 mt-8">
-            <BalanceAction icon={Wallet} label="Wallet" color="bg-[#ff7675]" onClick={() => window.location.href = '/wallet'} />
-            <BalanceAction icon={ArrowDownToLine} label="Deposit" color="bg-[#ffa502]" isCircle onClick={() => window.location.href = '/wallet#deposit'} />
-            <BalanceAction icon={ArrowUpToLine} label="Withdraw" color="bg-[#1e90ff]" isCircle onClick={() => window.location.href = '/wallet#withdraw'} />
+            <BalanceAction icon={Wallet} label="Wallet" color="bg-[#ff7675]" onClick={() => onNavigateToWallet?.('deposit')} />
+            <BalanceAction icon={ArrowDownToLine} label="Deposit" color="bg-[#ffa502]" isCircle onClick={() => onNavigateToWallet?.('deposit')} />
+            <BalanceAction icon={ArrowUpToLine} label="Withdraw" color="bg-[#1e90ff]" isCircle onClick={() => onNavigateToWallet?.('withdraw')} />
             <BalanceAction icon={Gem} label="VIP" color="bg-[#2ed573]" />
           </div>
         </div>
@@ -160,9 +160,9 @@ export default function Profile() {
         {/* Feature Grid Section */}
         <div className="grid grid-cols-2 gap-3">
           <FeatureCard icon={ClipboardList} label="Game History" sub="My game history" color="text-[#3498db]" />
-          <FeatureCard icon={Repeat} label="Transaction" sub="My transaction" color="text-[#2ecc71]" />
-          <FeatureCard icon={ArrowDownToLine} label="Deposit" sub="My deposit history" color="text-[#ff7675]" />
-          <FeatureCard icon={ArrowUpToLine} label="Withdraw" sub="My withdraw history" color="text-[#ffa502]" />
+          <FeatureCard icon={Repeat} label="Transaction" sub="My transaction" color="text-[#2ecc71]" onClick={() => onNavigateToWallet?.('deposit', 'history')} />
+          <FeatureCard icon={ArrowDownToLine} label="DepositHistory" sub="My deposit history" color="text-[#ff7675]" onClick={() => onNavigateToWallet?.('deposit', 'history')} />
+          <FeatureCard icon={ArrowUpToLine} label="WithdrawHistory" sub="My withdraw history" color="text-[#ffa502]" onClick={() => onNavigateToWallet?.('withdraw', 'history')} />
         </div>
 
         {/* Standard Menu List */}
@@ -218,9 +218,12 @@ function BalanceAction({ icon: Icon, label, color, isCircle, onClick }: { icon: 
   );
 }
 
-function FeatureCard({ icon: Icon, label, sub, color }: { icon: any, label: string, sub: string, color: string }) {
+function FeatureCard({ icon: Icon, label, sub, color, onClick }: { icon: any, label: string, sub: string, color: string, onClick?: () => void }) {
   return (
-    <div className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center space-x-3 active:scale-95 transition-all">
+    <div 
+      onClick={onClick}
+      className="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 flex items-center space-x-3 active:scale-95 transition-all cursor-pointer"
+    >
       <div className={`${color} flex-shrink-0`}>
          <Icon size={28} strokeWidth={2.5} />
       </div>
