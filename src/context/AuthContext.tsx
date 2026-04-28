@@ -6,6 +6,7 @@ import { handleFirestoreError, OperationType } from '../lib/utils';
 
 interface UserData {
   uid: string;
+  userNumericId: string;
   mobile: string;
   displayName: string;
   avatar: string;
@@ -72,10 +73,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const docSnap = await getDoc(userRef);
           if (!docSnap.exists()) {
             const mobile = user.phoneNumber || user.email?.split('@')[0] || '';
+            const numericId = Math.floor(1000000 + Math.random() * 9000000).toString();
             const newUserData: UserData = {
               uid: user.uid,
+              userNumericId: numericId,
               mobile: mobile,
-              displayName: "Tamim",
+              displayName: `User_${numericId.slice(-4)}`,
               avatar: AVATARS[Math.floor(Math.random() * AVATARS.length)],
               wallet: 20,
               hasDeposited: false,

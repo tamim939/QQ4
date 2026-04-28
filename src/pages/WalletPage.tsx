@@ -71,13 +71,8 @@ export default function WalletPage() {
     return () => unsubscribe();
   }, [user]);
 
-  if (!userData) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-[#f1c40f] border-t-transparent rounded-full animate-spin"></div>
-      </div>
-    );
-  }
+  // removed the early return for !userData
+  const walletBalance = userData?.wallet || 0;
 
   const methods = [
     { id: 'nagad', name: 'Nagad', icon: 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1024px-Nagad_Logo.svg.png', number: '01328848417' },
@@ -135,7 +130,7 @@ export default function WalletPage() {
       <div className="px-4 py-2">
         <div className="bg-[#f1c40f] rounded-[30px] p-8 text-white text-center shadow-lg shadow-[#f1c40f]/20">
           <p className="text-[10px] font-medium opacity-90 mb-2">Total balance</p>
-          <p className="text-4xl font-black mb-10 tracking-tight">৳ {userData.wallet.toFixed(2)}</p>
+          <p className="text-4xl font-black mb-10 tracking-tight">৳ {walletBalance.toFixed(2)}</p>
           
           <div className="flex space-x-4">
             <button className="flex-1 bg-white text-[#f1c40f] py-3 rounded-xl text-sm font-black shadow-md">

@@ -45,8 +45,8 @@ export default function Profile() {
   };
 
   const walletBalance = typeof userData?.wallet === 'number' ? userData.wallet : 0;
-  const username = userData?.displayName || userData?.mobile || "ইউজার";
-  const uid = userData?.uid?.slice(0, 6) || "000000";
+  const username = userData?.displayName || "ইউজার";
+  const userNumericId = userData?.userNumericId || "0000000";
 
   const avatar = userData?.avatar || "https://img.freepik.com/premium-photo/profile-avatar-white-male-with-yellow-hair-angry-surprised-expression_1020697-38010.jpg";
 
@@ -89,9 +89,9 @@ export default function Profile() {
               </div>
             </div>
             <div className="flex items-center space-x-2 text-[11px] font-bold text-white uppercase mt-1">
-              <span className="opacity-80">UID | {uid}</span>
+              <span className="opacity-80">UID | {userNumericId}</span>
               <button 
-                onClick={() => copyToClipboard(uid)} 
+                onClick={() => copyToClipboard(userNumericId)} 
                 className="bg-white/20 p-1 rounded transition-all active:bg-white/40"
               >
                 <Copy size={12} />
