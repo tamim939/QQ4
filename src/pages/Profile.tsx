@@ -29,6 +29,8 @@ import { db } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/utils';
 
 
+import toast from 'react-hot-toast';
+
 export default function Profile() {
   const { userData } = useAuth();
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -270,7 +272,7 @@ function AccountSettingsModal({ onClose, username }: { onClose: () => void, user
         }).catch(err => handleFirestoreError(err, OperationType.UPDATE, `users/${userData.uid}`));
         
         // Success feedback
-        alert('Name updated successfully!');
+        toast.success('Name updated successfully!');
       }
 
       onClose();

@@ -36,6 +36,7 @@ interface Transaction {
 export default function WalletPage() {
   const { userData, user } = useAuth();
   const [view, setView] = useState<ViewState>('wallet');
+  const [success, setSuccess] = useState(false);
   const [selectedMethod, setSelectedMethod] = useState<'nagad' | 'bkash'>('bkash');
   const [selectedChannel, setSelectedChannel] = useState('CashPay-bKash');
   const [amount, setAmount] = useState('300');
@@ -108,9 +109,14 @@ export default function WalletPage() {
         status: 'pending',
         timestamp: serverTimestamp()
       });
-      toast.success('Deposit submitted successfully');
-      setView('wallet');
-      setTxnId('');
+      
+      setSuccess(true);
+      setTimeout(() => {
+        setSuccess(false);
+        setView('wallet');
+        setTxnId('');
+      }, 2500);
+      
     } catch (error) {
       toast.error('Failed to submit deposit');
       console.error(error);
@@ -255,113 +261,159 @@ export default function WalletPage() {
   );
 
   const PaymentView = () => (
-    <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
-      <motion.div 
-        initial={{ scale: 0.9, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        className="bg-white w-full max-w-sm rounded-3xl overflow-hidden shadow-2xl flex flex-col max-h-[90vh]"
-      >
-        <div className="p-4 flex justify-between items-center border-b border-gray-100">
-          <button onClick={() => setView('wallet')} className="text-gray-400">
-            <X size={24} />
-          </button>
-          <h2 className="text-xl font-bold text-gray-800">Payment</h2>
-          <div className="w-6" />
-        </div>
-        
-        <div className="text-center py-2 text-[10px] text-gray-400 font-bold border-b border-gray-50">
-           {new Date().toLocaleString()}
-        </div>
+    <div className="fixed inset-0 bg-white z-[60] flex flex-col">
+      <AnimatePresence>
+        {success && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-white z-[70] flex flex-col items-center justify-center p-6 text-center"
+          >
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1, rotate: 360 }}
+              transition={{ type: "spring", damping: 12 }}
+              className="w-24 h-24 bg-[#2ecc71] rounded-full flex items-center justify-center text-white mb-6 shadow-xl shadow-green-200"
+            >
+              <Check size={48} strokeWidth={4} />
+            </motion.div>
+            <motion.h2 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="text-2xl font-black text-gray-800 mb-2"
+            >
+              Submission Success!
+            </motion.h2>
+            <motion.p 
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+              className="text-sm font-bold text-gray-400"
+            >
+              Your deposit request is being processed. It will be added to your balance after admin verification.
+            </motion.p>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-4 no-scrollbar">
-           {/* Instruction Box */}
-           <div className="bg-[#e91e63] rounded-2xl p-6 text-white text-sm space-y-4">
-              <p className="font-bold leading-relaxed">
-                অনুগ্রহ করে একই পরিমাণ স্থানান্তর করুন এবং ব্যর্থ এড়াতে সঠিক TxnID পূরণ করুন
-              </p>
-              <p className="text-xs opacity-90">
-                এই {selectedMethod === 'bkash' ? 'বিকাশ' : 'নগদ'} অ্যাকাউন্টে অর্থ প্রদান করতে <span className="bg-black/20 px-2 py-0.5 rounded font-black">সেন্ড মানি</span> ব্যবহার করুন
-              </p>
+      <div className="p-4 flex justify-between items-center border-b border-gray-100 bg-white shadow-sm">
+        <button onClick={() => setView('wallet')} className="text-gray-400 p-2">
+          <X size={24} />
+        </button>
+        <h2 className="text-xl font-bold text-gray-800">Payment</h2>
+        <div className="w-10" />
+      </div>
+      
+      <div className="text-center py-2 text-[10px] text-gray-400 font-bold border-b border-gray-50 flex items-center justify-center space-x-2">
+         <Clock size={12} />
+         <span>{new Date().toLocaleString()}</span>
+      </div>
 
-              <div className="bg-white rounded-xl p-4 space-y-4 text-gray-800">
-                 <div className="flex justify-between items-center text-xs">
-                    <span className="font-bold">ওয়ালেট</span>
-                    <span className="flex items-center space-x-2 text-[#e91e63] font-black">
-                       <img 
-                         src={methods.find(m => m.id === selectedMethod)?.icon} 
-                         className="w-5 h-5 object-contain" 
-                         alt="" 
-                       />
-                       <span>{selectedMethod === 'bkash' ? 'bKash' : 'Nagad'}</span>
-                    </span>
-                 </div>
-                 <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold">সংখ্যা</span>
-                    <div className="flex items-center space-x-2">
-                       <span className="text-[#3498db] font-black text-lg">{methods.find(m => m.id === selectedMethod)?.number}</span>
-                       <button 
-                         onClick={() => copyToClipboard(methods.find(m => m.id === selectedMethod)?.number || '')}
-                         className="text-[#3498db] p-1 active:scale-90 transition-transform"
-                       >
-                         <Copy size={16} />
-                       </button>
-                    </div>
-                 </div>
-                 <div className="flex justify-between items-center">
-                    <span className="text-xs font-bold">পরিমাণ</span>
-                    <div className="flex items-center space-x-2">
-                       <span className="text-[#2ecc71] font-black text-xl">{amount}</span>
-                       <button 
-                         onClick={() => copyToClipboard(amount)}
-                         className="text-[#2ecc71] p-1 active:scale-90 transition-transform"
-                       >
-                         <Copy size={16} />
-                       </button>
-                    </div>
-                 </div>
-              </div>
+      <div className="flex-1 overflow-y-auto p-4 space-y-6 no-scrollbar pb-10">
+         {/* Instruction Box */}
+         <div className="bg-[#e91e63] rounded-3xl p-6 text-white text-sm space-y-5 shadow-lg shadow-pink-100">
+            <p className="font-bold leading-relaxed text-[15px]">
+              অনুগ্রহ করে একই পরিমাণ স্থানান্তর করুন এবং ব্যর্থ এড়াতে সঠিক TxnID পূরণ করুন
+            </p>
+            <p className="text-xs opacity-90 border-l-2 border-white/30 pl-3">
+              এই {selectedMethod === 'bkash' ? 'বিকাশ' : 'নগদ'} অ্যাকাউন্টে অর্থ প্রদান করতে <span className="bg-black/20 px-2 py-0.5 rounded font-black">সেন্ড মানি</span> ব্যবহার করুন
+            </p>
 
-              <div className="space-y-2 pt-2">
-                 <p className="text-xs font-bold">রিচার্জ সম্পূর্ণ করতে অনুগ্রহ করে লেনদেন আইডি লিখুন</p>
+            <div className="bg-white rounded-2xl p-5 space-y-5 text-gray-800 shadow-inner">
+               <div className="flex justify-between items-center text-xs">
+                  <span className="font-bold text-gray-400">ওয়ালেট</span>
+                  <span className="flex items-center space-x-2 text-[#e91e63] font-black">
+                     <img 
+                       src={methods.find(m => m.id === selectedMethod)?.icon} 
+                       className="w-5 h-5 object-contain" 
+                       alt="" 
+                     />
+                     <span>{selectedMethod === 'bkash' ? 'bKash' : 'Nagad'}</span>
+                  </span>
+               </div>
+
+               <div className="flex justify-between items-center">
+                  <div className="space-y-1">
+                     <span className="text-[10px] font-bold text-gray-400 block uppercase tracking-wider">রিসিভার নম্বর</span>
+                     <p className="text-lg font-black text-gray-800">{methods.find(m => m.id === selectedMethod)?.number}</p>
+                  </div>
+                  <button 
+                    onClick={() => copyToClipboard(methods.find(m => m.id === selectedMethod)?.number || '')}
+                    className="bg-[#f1c40f]/10 p-3 rounded-xl text-[#f1c40f] active:scale-95 transition-all"
+                  >
+                    <Copy size={20} />
+                  </button>
+               </div>
+
+               <div className="flex justify-between items-center border-t border-gray-50 pt-4">
+                  <div className="space-y-1">
+                     <span className="text-[10px] font-bold text-gray-400 block uppercase tracking-wider">টাকার পরিমাণ</span>
+                     <p className="text-lg font-black text-gray-800">৳ {amount}.00</p>
+                  </div>
+                  <button 
+                    onClick={() => copyToClipboard(amount)}
+                    className="bg-[#f1c40f]/10 p-3 rounded-xl text-[#f1c40f] active:scale-95 transition-all"
+                  >
+                    <Copy size={20} />
+                  </button>
+               </div>
+            </div>
+         </div>
+
+         <div className="bg-gray-50 rounded-3xl p-6 space-y-4 shadow-sm border border-gray-100">
+            <div>
+              <label className="text-xs font-bold text-gray-500 mb-2 block uppercase tracking-wide">Enter Transaction ID</label>
+              <div className="relative">
                  <input 
-                   type="text" 
-                   placeholder="Transaction ID"
+                   type="text"
+                   placeholder="8 বা 10 সংখ্যার TxnID"
+                   className="w-full bg-white border border-gray-100 rounded-2xl py-5 px-6 font-black text-gray-800 focus:border-[#f1c40f] outline-none transition-all shadow-sm"
                    value={txnId}
                    onChange={(e) => setTxnId(e.target.value)}
-                   className="w-full bg-white rounded-lg py-3 px-4 text-gray-800 outline-none placeholder:text-gray-300 font-bold"
                  />
-                 <button 
-                   onClick={handleDepositSubmit}
-                   disabled={isSubmitting}
-                   className="w-full bg-[#f39c12] hover:bg-[#e67e22] text-white py-3 rounded-lg font-black mt-2 shadow-lg active:scale-95 transition-all text-sm disabled:opacity-50"
-                 >
-                   {isSubmitting ? 'Processing...' : 'জমা দিন'}
-                 </button>
+                 <div className="absolute right-6 top-1/2 -translate-y-1/2 text-gray-300">
+                    <History size={20} />
+                 </div>
               </div>
-           </div>
+            </div>
 
-           {/* Legal/Explain Box */}
-           <div className="bg-gray-50 border border-gray-100 rounded-2xl p-6 space-y-6">
-              <h3 className="text-sm font-black text-blue-900 border-b border-gray-200 pb-2">ব্যাখ্যা:</h3>
-              <div className="space-y-6 text-[11px] leading-relaxed text-gray-600">
-                 <div className="flex space-x-3">
-                    <span className="font-black text-blue-800">১.</span>
-                    <div className="space-y-1">
-                       <p className="font-black text-gray-800">ওয়ালেট জমা ব্যবহারকারীদের জন্য নির্দেশিকা</p>
-                       <p>নির্দেশিকা ম্যাচিং প্রক্রিয়া সম্পন্ন হওয়ার পর এবং নির্ধারিত নিয়ন্ত্রিত ওয়ালেট অ্যাকাউন্ট প্রাপ্তির পর বিনিয়োগকারীদের অবশ্যই তাদের ব্যক্তিগত ওয়ালেট অ্যাকাউন্ট ব্যবহার করে অর্থ প্রেরণ করতে হবে এবং সেই অর্থ নির্দিষ্ট করা নিয়ন্ত্রিত ওয়ালেট অ্যাকাউন্টে জমা দিতে হবে।</p>
-                    </div>
-                 </div>
-                 <div className="flex space-x-3">
-                    <span className="font-black text-blue-800">২.</span>
-                    <div className="space-y-1">
-                       <p className="font-black text-gray-800">অর্থ প্রেরণ ও জমা নিশ্চিতকরণ প্রক্রিয়া</p>
-                       <p>অর্থ প্রেরণ সম্পন্ন হওয়ার পর অবিলম্বে লেনদেন নম্বর জমা দিতে হবে, যাতে সিস্টেম তাৎক্ষণিকভাবে যাচাই করে জমা নিশ্চিত করতে পারে।</p>
-                    </div>
-                 </div>
-              </div>
-           </div>
-        </div>
-      </motion.div>
+            <button 
+              disabled={!txnId || isSubmitting}
+              onClick={handleDepositSubmit}
+              className="w-full bg-[#f1c40f] text-white py-5 rounded-[24px] font-black text-lg shadow-xl shadow-[#f1c40f]/20 active:scale-95 transition-all disabled:opacity-50 disabled:grayscale"
+            >
+              {isSubmitting ? (
+                <div className="w-6 h-6 border-4 border-white border-t-transparent rounded-full animate-spin mx-auto"></div>
+              ) : (
+                'জমা দিন'
+              )}
+            </button>
+         </div>
+
+         <div className="bg-white border border-gray-100 rounded-3xl p-6 space-y-4 shadow-sm">
+            <h3 className="text-sm font-black text-gray-800 border-b border-gray-50 pb-3">ব্যাখ্যা:</h3>
+            <div className="space-y-4 text-[11px] leading-relaxed text-gray-500">
+               <div className="flex space-x-3">
+                  <span className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center font-black text-[10px]">১</span>
+                  <p>নির্দেশিকা ম্যাচিং প্রক্রিয়া সম্পন্ন হওয়ার পর এবং নির্ধারিত নিয়ন্ত্রিত অ্যাকাউন্ট প্রাপ্তির পর ব্যক্তিগত ওয়ালেট ব্যবহার করে অর্থ প্রেরণ করতে হবে।</p>
+               </div>
+               <div className="flex space-x-3">
+                  <span className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center font-black text-[10px]">২</span>
+                  <p>অর্থ প্রেরণ সম্পন্ন হওয়ার পর অবিলম্বে লেনদেন নম্বর জমা দিতে হবে, যাতে সিস্টেম যাচাই করে জমা নিশ্চিত করতে পারে।</p>
+               </div>
+            </div>
+         </div>
+
+         <div className="text-center space-y-2 pb-6">
+            <p className="text-[10px] font-bold text-gray-400">ধন্যবাদ আমাদের সাথে থাকার জন্য!</p>
+            <div className="flex justify-center space-x-4 grayscale opacity-30 mt-4">
+               <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Nagad_Logo.svg/1024px-Nagad_Logo.svg.png" className="h-4 object-contain" />
+               <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/BKash_Logo.svg/1200px-BKash_Logo.svg.png" className="h-4 object-contain" />
+            </div>
+         </div>
+      </div>
     </div>
   );
 
@@ -399,10 +451,10 @@ export default function WalletPage() {
                     </div>
                     <div className="text-right">
                        <p className="text-lg font-black text-gray-800">৳{tx.amount.toFixed(2)}</p>
-                       <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${
-                         tx.status === 'pending' ? 'bg-yellow-50 text-yellow-600' :
-                         tx.status === 'success' ? 'bg-green-50 text-green-600' :
-                         'bg-red-50 text-red-600'
+                       <span className={`text-[10px] font-extrabold uppercase px-3 py-1 rounded-full ${
+                         tx.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                         tx.status === 'success' ? 'bg-green-100 text-green-700' :
+                         'bg-red-100 text-red-700'
                        }`}>
                           {tx.status === 'pending' ? 'Pending' : 
                            tx.status === 'success' ? 'Approved' : 'Cancelled'}
