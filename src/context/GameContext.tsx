@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useState, useCallback } from 'react';
-import { collection, query, orderBy, limit, onSnapshot, doc, setDoc } from 'firebase/firestore';
-import { db } from '../lib/firebase';
+import { collection, query, orderBy, limit, onSnapshot, doc, setDoc, where, getDocs, writeBatch, increment, updateDoc } from 'firebase/firestore';
+import { db, auth } from '../lib/firebase';
 import { handleFirestoreError, OperationType } from '../lib/utils';
-
+import { onAuthStateChanged } from 'firebase/auth';
 
 interface GameResult {
   periodId: string;
@@ -29,6 +29,11 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     60: { currentPeriodId: '', timeLeft: 60, history: [] },
     180: { currentPeriodId: '', timeLeft: 180, history: [] },
   });
+  const [currentUser, setCurrentUser] = useState<any>(null);
+
+  useEffect(() => {
+    return onAuthStateChanged(auth, u => setCurrentUser(u));
+  }, []);
 
   const generatePeriodId = (duration: number, date: Date = new Date()) => {
     const year = date.getUTCFullYear();
@@ -61,9 +66,6 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const periodId = generatePeriodId(d, now);
         const timeLeft = d - (secondsSinceEpoch % d);
         
-        // When a period ends, we could potentially trigger result save here if we were "host"
-        // But for simplicity, we derive results deterministically from periodId
-        
         next[d] = {
           ...prev[d],
           currentPeriodId: periodId,
@@ -79,7 +81,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     return () => clearInterval(timer);
   }, [updateTick]);
 
-  // Listen to history for each duration
+  // Listen to history
   useEffect(() => {
     const unsubscribes = [30, 60, 180].map(d => {
       const q = query(
@@ -94,15 +96,87 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
           ...prev,
           [d]: { ...prev[d], history }
         }));
-      }, (error) => {
-        console.error("Firestore history error:", error);
       });
     });
 
     return () => unsubscribes.forEach(unsub => unsub());
   }, []);
 
-  // "Host" logic to populate results (simple version)
+  // Settlement Logic
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const settleInterval = setInterval(async () => {
+      try {
+        const q = query(
+          collection(db, 'bets'),
+          where('userId', '==', currentUser.uid),
+          where('status', '==', 'pending'),
+          limit(10)
+        );
+        const snapshot = await getDocs(q);
+        if (snapshot.empty) return;
+
+        const batch = writeBatch(db);
+        let userWalletUpdate = 0;
+
+        for (const betDoc of snapshot.docs) {
+          const bet = betDoc.data();
+          const duration = bet.duration;
+          const periodId = bet.periodId;
+
+          // Check if we have history for this period
+          const historyEntry = durations[duration].history.find(h => h.periodId === periodId);
+          if (historyEntry) {
+             let isWin = false;
+             let multiplier = 2; // Default for color/size
+
+             if (bet.type === 'number') {
+                isWin = parseInt(bet.value) === historyEntry.number;
+                multiplier = 9;
+             } else if (bet.type === 'color') {
+                isWin = bet.value === historyEntry.color;
+                if (isWin) {
+                   if (bet.value === 'Violet') multiplier = 4.5;
+                   else if ((historyEntry.number === 0 || historyEntry.number === 5)) multiplier = 1.5;
+                }
+             } else if (bet.type === 'size') {
+                isWin = bet.value === historyEntry.size;
+             }
+
+             const status = isWin ? 'win' : 'lose';
+             const winAmount = isWin ? bet.amount * multiplier : 0;
+
+             batch.update(betDoc.ref, { 
+               status, 
+               winAmount,
+               resultNumber: historyEntry.number,
+               resultColor: historyEntry.color,
+               resultSize: historyEntry.size
+             });
+
+             if (isWin) {
+                userWalletUpdate += winAmount;
+             }
+          }
+        }
+
+        if (userWalletUpdate > 0) {
+           batch.update(doc(db, 'users', currentUser.uid), {
+              wallet: increment(userWalletUpdate)
+           });
+        }
+
+        await batch.commit();
+      } catch (e) {
+        console.error("Settlement error:", e);
+      }
+    }, 5000);
+
+    return () => clearInterval(settleInterval);
+  }, [currentUser, durations]);
+
+  // Host logic
   useEffect(() => {
     const hostInterval = setInterval(async () => {
       const now = new Date();
@@ -110,13 +184,9 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         const prevDate = new Date(now.getTime() - d * 1000);
         const prevPeriodId = generatePeriodId(d, prevDate);
         
-        // We only write if it's not already there
-        // In a real app, this is done by a server
         const res = calculateResult(prevPeriodId);
-        const docId = `${d}_${prevPeriodId}`;
         const docRef = doc(db, `game_periods/${d}/history`, prevPeriodId);
         
-        // Only one user tends to win the race to set this
         try {
           await setDoc(docRef, {
             ...res,
@@ -124,7 +194,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
             timestamp: prevDate.toISOString()
           }, { merge: true });
         } catch (e) {
-          handleFirestoreError(e, OperationType.WRITE, `game_periods/${d}/history/${prevPeriodId}`);
+          // ignore
         }
       });
     }, 10000);

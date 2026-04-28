@@ -95,179 +95,109 @@ export default function AdminDashboard({ onBack }: { onBack: () => void }) {
          </div>
       </div>
 
-      {/* Content */}
       <div className="flex-1 px-4 space-y-4">
-         {activeTab === 'deposits' && <DepositsList searchQuery={searchQuery} />}
-         {activeTab === 'withdrawals' && <WithdrawalsList searchQuery={searchQuery} />}
-         {activeTab === 'users' && <UsersList searchQuery={searchQuery} />}
-         {activeTab === 'gifts' && <GiftsManage />}
+          {activeTab === 'deposits' && <TransactionList type="deposit" searchQuery={searchQuery} />}
+          {activeTab === 'withdrawals' && <TransactionList type="withdraw" searchQuery={searchQuery} />}
+          {activeTab === 'users' && <UsersList searchQuery={searchQuery} />}
+          {activeTab === 'gifts' && <GiftsManage />}
       </div>
     </div>
   );
 }
 
-function DepositsList({ searchQuery }: { searchQuery: string }) {
-  const [data, setData] = useState<any[]>([]);
+function TransactionList({ type, searchQuery }: { type: 'deposit' | 'withdraw', searchQuery: string }) {
+  const [txns, setTxns] = useState<any[]>([]);
 
   useEffect(() => {
     const q = query(
       collection(db, 'transactions'),
-      where('type', '==', 'deposit'),
+      where('type', '==', type),
       orderBy('timestamp', 'desc'),
       limit(50)
     );
     return onSnapshot(q, (snapshot) => {
-      setData(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
+      setTxns(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
     });
-  }, []);
+  }, [type]);
 
   const handleAction = async (id: string, status: 'success' | 'rejected', amount: number, userId: string) => {
     try {
       await updateDoc(doc(db, 'transactions', id), { status });
-      if (status === 'success') {
+      if (status === 'success' && type === 'deposit') {
          await updateDoc(doc(db, 'users', userId), {
             wallet: increment(amount),
             hasDeposited: true
          });
       }
-      toast.success(`Deposit ${status}`);
+      toast.success(`${type === 'deposit' ? 'Deposit' : 'Withdrawal'} ${status}`);
     } catch (err) {
       toast.error('Action failed');
     }
   };
 
-  const filtered = data.filter(d => 
-    d.txId?.toLowerCase().includes(searchQuery.toLowerCase()) || 
-    d.userId?.toLowerCase().includes(searchQuery.toLowerCase())
+  const filtered = txns.filter(t => 
+    t.txId?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    t.userId?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    t.number?.includes(searchQuery)
   );
 
   return (
     <div className="space-y-4">
-      {filtered.map((item) => (
-        <div key={item.id} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
-          <div className="flex justify-between items-start">
-             <div>
-                <p className="text-sm font-black text-gray-800">৳ {item.amount.toFixed(2)}</p>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.method} Deposit</p>
-             </div>
-             <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${
-                item.status === 'pending' ? 'bg-amber-50 text-amber-500' :
-                item.status === 'success' ? 'bg-emerald-50 text-emerald-500' :
-                'bg-rose-50 text-rose-500'
-             }`}>
-                {item.status}
-             </span>
-          </div>
+       {filtered.map(t => (
+         <div key={t.id} className="bg-white rounded-[24px] p-5 shadow-sm border border-gray-100 space-y-3">
+            <div className="flex justify-between items-start">
+               <div className="text-left">
+                  <p className="text-sm font-black text-gray-800">৳{t.amount.toFixed(2)}</p>
+                  <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest leading-none mt-1">{t.method} {type === 'deposit' ? 'DEPOSIT' : 'WITHDRAWAL'}</p>
+               </div>
+               <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
+                 t.status === 'pending' ? 'bg-amber-50 text-amber-500' : t.status === 'success' ? 'bg-emerald-50 text-emerald-500' : 'bg-rose-50 text-rose-500'
+               }`}>
+                 {t.status}
+               </span>
+            </div>
 
-          <div className="grid grid-cols-2 gap-4 py-3 border-y border-gray-50">
-             <div>
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">TrxID</p>
-                <p className="text-[11px] font-bold text-gray-600 font-mono">{item.txId}</p>
-             </div>
-             <div>
-                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">User UID</p>
-                <p className="text-[11px] font-bold text-gray-600 truncate">{item.userId}</p>
-             </div>
-          </div>
+            <div className="grid grid-cols-2 gap-4 py-3 border-y border-gray-50 text-left">
+               <div>
+                  <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-0.5">{type === 'deposit' ? 'TrxID' : 'Ac/Number'}</p>
+                  <p className="text-[10px] font-bold text-gray-500 font-mono">{type === 'deposit' ? t.txId : t.number}</p>
+               </div>
+               <div>
+                  <p className="text-[8px] font-black text-gray-300 uppercase tracking-widest mb-0.5">Time</p>
+                  <p className="text-[10px] font-bold text-gray-500 truncate">{t.timestamp?.toDate().toLocaleString()}</p>
+               </div>
+            </div>
 
-          {item.status === 'pending' && (
-             <div className="flex space-x-3 pt-2">
-                <button 
-                  onClick={() => handleAction(item.id, 'rejected', item.amount, item.userId)}
-                  className="flex-1 py-3.5 bg-rose-50 text-rose-500 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all"
-                >
-                  Reject
-                </button>
-                <button 
-                  onClick={() => handleAction(item.id, 'success', item.amount, item.userId)}
-                  className="flex-1 py-3.5 bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
-                >
-                  Approve
-                </button>
-             </div>
-          )}
-        </div>
-      ))}
-      {filtered.length === 0 && <div className="py-20 text-center text-gray-300 font-bold">No pending deposits</div>}
+            <p className="text-[8px] font-mono text-gray-200 text-left">UID: {t.userId}</p>
+            
+            {t.status === 'pending' && (
+              <div className="flex space-x-2 pt-1">
+                 <button 
+                  onClick={() => handleAction(t.id, 'rejected', t.amount, t.userId)}
+                  className="flex-1 py-3 bg-rose-50 text-rose-500 rounded-xl text-[10px] font-black uppercase tracking-widest active:scale-95 transition-all"
+                 >
+                    Reject
+                 </button>
+                 <button 
+                  onClick={() => handleAction(t.id, 'success', t.amount, t.userId)}
+                  className="flex-1 py-3 bg-emerald-500 text-white rounded-xl text-[10px] font-black uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
+                 >
+                    Approve
+                 </button>
+              </div>
+            )}
+         </div>
+       ))}
+       {filtered.length === 0 && (
+          <div className="py-20 text-center flex flex-col items-center justify-center opacity-30 grayscale">
+             <Clock size={40} className="mb-4" />
+             <p className="text-[10px] font-black uppercase tracking-[0.2em]">No {type}s found.</p>
+          </div>
+       )}
     </div>
   );
 }
 
-function WithdrawalsList({ searchQuery }: { searchQuery: string }) {
-  const [data, setData] = useState<any[]>([]);
-
-  useEffect(() => {
-    const q = query(
-      collection(db, 'transactions'),
-      where('type', '==', 'withdraw'),
-      orderBy('timestamp', 'desc'),
-      limit(50)
-    );
-    return onSnapshot(q, (snapshot) => {
-      setData(snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-    });
-  }, []);
-
-  const handleAction = async (id: string, status: 'success' | 'rejected') => {
-    try {
-      await updateDoc(doc(db, 'transactions', id), { status });
-      toast.success(`Withdrawal ${status}`);
-    } catch (err) {
-      toast.error('Action failed');
-    }
-  };
-
-  const filtered = data.filter(d => 
-    d.userId?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  return (
-    <div className="space-y-4">
-      {filtered.map((item) => (
-        <div key={item.id} className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 space-y-4">
-          <div className="flex justify-between items-start">
-             <div>
-                <p className="text-sm font-black text-gray-800">৳ {item.amount.toFixed(2)}</p>
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">{item.method} Withdrawal</p>
-             </div>
-             <span className={`text-[9px] font-black uppercase px-3 py-1 rounded-full ${
-                item.status === 'pending' ? 'bg-amber-50 text-amber-500' :
-                item.status === 'success' ? 'bg-emerald-50 text-emerald-500' :
-                'bg-rose-50 text-rose-500'
-             }`}>
-                {item.status}
-             </span>
-          </div>
-
-          <div className="py-3 border-y border-gray-50">
-             <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-0.5">Account Number</p>
-             <p className="text-[11px] font-bold text-gray-600 font-mono">{item.number}</p>
-             <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mt-2 mb-0.5">User UID</p>
-             <p className="text-[11px] font-bold text-gray-600 truncate">{item.userId}</p>
-          </div>
-
-          {item.status === 'pending' && (
-             <div className="flex space-x-3 pt-2">
-                <button 
-                  onClick={() => handleAction(item.id, 'rejected')}
-                  className="flex-1 py-3.5 bg-rose-50 text-rose-500 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all"
-                >
-                  Reject
-                </button>
-                <button 
-                  onClick={() => handleAction(item.id, 'success')}
-                  className="flex-1 py-3.5 bg-emerald-500 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg shadow-emerald-500/20 active:scale-95 transition-all"
-                >
-                  Approve
-                </button>
-             </div>
-          )}
-        </div>
-      ))}
-      {filtered.length === 0 && <div className="py-20 text-center text-gray-300 font-bold">No pending withdrawals</div>}
-    </div>
-  );
-}
 
 function UsersList({ searchQuery }: { searchQuery: string }) {
   const [users, setUsers] = useState<any[]>([]);
@@ -275,9 +205,19 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
   const [adjustAmount, setAdjustAmount] = useState('');
 
   useEffect(() => {
-    const q = query(collection(db, 'users'), limit(50));
+    const q = query(
+      collection(db, 'users'),
+      orderBy('createdAt', 'desc'),
+      limit(100)
+    );
     return onSnapshot(q, (snapshot) => {
       setUsers(snapshot.docs.map(doc => ({ uid: doc.id, ...doc.data() })));
+    }, (error) => {
+      // Fallback if createdAt doesn't exist yet on all docs
+      const qFallback = query(collection(db, 'users'), limit(100));
+      onSnapshot(qFallback, (snap) => {
+        setUsers(snap.docs.map(doc => ({ uid: doc.id, ...doc.data() })));
+      });
     });
   }, []);
 
@@ -374,57 +314,104 @@ function UsersList({ searchQuery }: { searchQuery: string }) {
 }
 
 function GiftsManage() {
-  const [code, setCode] = useState('');
+  const [generatedCode, setGeneratedCode] = useState('');
   const [amount, setAmount] = useState('');
   const [maxClaims, setMaxClaims] = useState('');
+  const [isGenerating, setIsGenerating] = useState(false);
 
-  const generateCode = async () => {
-    if (!code || !amount || !maxClaims) return;
+  const generateRandomCode = () => {
+    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+    let result = '';
+    for (let i = 0; i < 8; i++) {
+       result += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    return result;
+  };
+
+  const handleGenerate = async () => {
+    if (!amount || !maxClaims) {
+       toast.error('Please enter amount and claims');
+       return;
+    }
+    
+    setIsGenerating(true);
+    const newCode = generateRandomCode();
+    
     try {
-      const codeRef = doc(db, 'gift_codes', code.toUpperCase());
+      const codeRef = doc(db, 'gift_codes', newCode);
       await setDoc(codeRef, {
-         code: code.toUpperCase(),
+         code: newCode,
+         status: 'active',
          amount: parseFloat(amount),
          maxClaims: parseInt(maxClaims),
          currentClaims: 0,
          createdAt: serverTimestamp()
       });
-      toast.success('Code Generated!');
-      setCode('');
+      
+      setGeneratedCode(newCode);
+      toast.success('Gift Code Generated!');
       setAmount('');
       setMaxClaims('');
     } catch (err) {
       toast.error('Failed to create code');
+    } finally {
+      setIsGenerating(false);
     }
   };
 
   return (
-    <div className="bg-white rounded-[32px] p-8 shadow-sm border border-gray-100 space-y-6">
-       <h3 className="text-sm font-black text-gray-800 uppercase tracking-widest text-center">Manage Gift Codes</h3>
-       <div className="space-y-4">
-          <input 
-            type="text" 
-            placeholder="CODE (e.g. MK25WIN)" 
-            value={code} onChange={(e) => setCode(e.target.value)}
-            className="w-full py-4 px-6 bg-gray-50 rounded-2xl border border-gray-100 outline-none uppercase font-bold"
-          />
-          <input 
-            type="number" 
-            placeholder="Amount" 
-            value={amount} onChange={(e) => setAmount(e.target.value)}
-            className="w-full py-4 px-6 bg-gray-50 rounded-2xl border border-gray-100 outline-none font-bold"
-          />
-          <input 
-            type="number" 
-            placeholder="Max Claims" 
-            value={maxClaims} onChange={(e) => setMaxClaims(e.target.value)}
-            className="w-full py-4 px-6 bg-gray-50 rounded-2xl border border-gray-100 outline-none font-bold"
-          />
+    <div className="bg-white rounded-[40px] p-10 shadow-sm border border-gray-100 flex flex-col items-center">
+       <div className="w-16 h-16 bg-[#f1c40f]/10 rounded-[28px] flex items-center justify-center text-[#f1c40f] mb-6">
+          <Gift size={32} strokeWidth={2.5} />
+       </div>
+       <h3 className="text-sm font-black text-gray-800 uppercase tracking-[0.2em] mb-10">MANAGE GIFT CODES</h3>
+       
+       <div className="w-full space-y-4">
+          {generatedCode && (
+             <motion.div 
+               initial={{ opacity: 0, y: -10 }}
+               animate={{ opacity: 1, y: 0 }}
+               onClick={() => {
+                  navigator.clipboard.writeText(generatedCode);
+                  toast.success('Code copied!');
+               }}
+               className="w-full bg-emerald-50 border border-emerald-100 p-6 rounded-3xl mb-6 text-center cursor-pointer active:scale-95 transition-all"
+             >
+                <p className="text-[9px] font-black text-emerald-600 uppercase tracking-widest mb-2 font-sans">Latest Generated Code (Tap to Copy)</p>
+                <div className="flex items-center justify-center space-x-3">
+                   <p className="text-2xl font-black text-emerald-700 tracking-wider font-mono">{generatedCode}</p>
+                   <div className="p-2 bg-emerald-500 text-white rounded-xl">
+                      <Copy size={16} />
+                   </div>
+                </div>
+             </motion.div>
+          )}
+
+          <div className="bg-gray-50 rounded-2xl p-4 flex flex-col space-y-1">
+             <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest ml-1">Bonus Amount</span>
+             <input 
+               type="number" 
+               placeholder="e.g. 500" 
+               value={amount} onChange={(e) => setAmount(e.target.value)}
+               className="bg-transparent border-none outline-none font-bold text-gray-800 px-1"
+             />
+          </div>
+          <div className="bg-gray-50 rounded-2xl p-4 flex flex-col space-y-1">
+             <span className="text-[8px] font-black text-gray-300 uppercase tracking-widest ml-1">Total Users (Max Claims)</span>
+             <input 
+               type="number" 
+               placeholder="e.g. 100" 
+               value={maxClaims} onChange={(e) => setMaxClaims(e.target.value)}
+               className="bg-transparent border-none outline-none font-bold text-gray-800 px-1"
+             />
+          </div>
+          
           <button 
-            className="w-full py-4 bg-[#f1c40f] text-white rounded-2xl font-black uppercase text-[10px] tracking-widest active:scale-95 transition-all shadow-lg shadow-[#f1c40f]/20"
-            onClick={generateCode}
+            disabled={isGenerating}
+            className="w-full py-5 mt-4 bg-[#f1c40f] text-white rounded-[24px] font-black uppercase text-[11px] tracking-widest active:scale-95 transition-all shadow-xl shadow-[#f1c40f]/20 disabled:opacity-50"
+            onClick={handleGenerate}
           >
-            Create Gift Code
+            {isGenerating ? 'GENERATING...' : 'GENERATE GIFT CODE'}
           </button>
        </div>
     </div>

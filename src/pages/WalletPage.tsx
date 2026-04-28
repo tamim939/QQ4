@@ -358,16 +358,13 @@ const WalletView = ({
            </div>
 
            <button 
-             className="w-full bg-[#f1c40f] text-white py-5 rounded-[24px] font-black text-lg shadow-xl shadow-[#f1c40f]/20 active:scale-95 transition-all mt-4"
-             onClick={() => {
-               if (!userData?.boundWallet) {
-                 toast.error('Please bind your wallet first');
-                 return;
-               }
-               toast.error('Withdrawals are currently disabled for your account level');
-             }}
+             className={`w-full py-5 rounded-[24px] font-black text-lg shadow-xl active:scale-95 transition-all mt-4 ${
+               isSubmitting ? 'bg-gray-200 text-gray-400' : 'bg-[#f1c40f] text-white shadow-[#f1c40f]/20'
+             }`}
+             disabled={isSubmitting}
+             onClick={handleWithdrawSubmit}
            >
-             Withdraw
+             {isSubmitting ? 'Processing...' : 'Withdraw'}
            </button>
         </div>
       </div>
@@ -409,14 +406,14 @@ const HistoryView = ({ transactions, setView }: any) => (
                   </div>
                   <div className="text-right">
                      <p className="text-lg font-black text-gray-800">৳{tx.amount.toFixed(2)}</p>
-                     <span className={`text-[10px] font-extrabold uppercase px-3 py-1 rounded-full ${
-                       tx.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                       tx.status === 'success' ? 'bg-green-100 text-green-700' :
-                       'bg-red-100 text-red-700'
-                     }`}>
-                        {tx.status === 'pending' ? 'Pending' : 
-                         tx.status === 'success' ? 'Approved' : 'Cancelled'}
-                     </span>
+                      <span className={`text-[10px] font-extrabold uppercase px-3 py-1 rounded-full ${
+                        tx.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                        tx.status === 'success' ? 'bg-green-100 text-green-700' :
+                        'bg-red-100 text-red-700'
+                      }`}>
+                         {tx.status === 'pending' ? 'Pending' : 
+                          tx.status === 'success' ? 'Completed' : 'Cancelled'}
+                      </span>
                   </div>
                </div>
                
@@ -610,6 +607,53 @@ export default function WalletPage({ initialTab = 'deposit', initialView = 'wall
 
   const channels = ['CashPay-bKash', 'GoPay-bKash', 'RolezPay-bKash', 'Lucky-bKash'];
   const amounts = ['300', '500', '1K', '2K', '10K', '25K'];
+
+  const handleWithdrawSubmit = async () => {
+    if (!withdrawAmount || parseFloat(withdrawAmount) < 500) {
+      toast.error('Minimum withdrawal is 500');
+      return;
+    }
+    if (!loginPassword) {
+      toast.error('Please enter login password');
+      return;
+    }
+    if (!userData?.boundWallet) {
+      toast.error('Please bind your wallet first');
+      return;
+    }
+    if (parseFloat(withdrawAmount) > walletBalance) {
+      toast.error('Insufficient balance');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      // Deduct balance immediately
+      await updateDoc(doc(db, 'users', user?.uid!), {
+        wallet: increment(-parseFloat(withdrawAmount))
+      });
+
+      await addDoc(collection(db, 'transactions'), {
+        userId: user?.uid,
+        type: 'withdraw',
+        amount: parseFloat(withdrawAmount),
+        method: userData.boundWallet.method,
+        number: userData.boundWallet.number,
+        status: 'pending',
+        timestamp: serverTimestamp(),
+        txId: 'W' + Math.random().toString(36).substring(2, 10).toUpperCase()
+      });
+
+      toast.success('Withdrawal request submitted!');
+      setView('history');
+      setWithdrawAmount('');
+      setLoginPassword('');
+    } catch (error) {
+      toast.error('Failed to submit withdrawal');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleDepositSubmit = async () => {
     if (!txnId.trim()) {
